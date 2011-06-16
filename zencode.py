@@ -1,8 +1,8 @@
-import secrets
+from secrets import zencoder_api_key
 from zencoder import Zencoder
 
-def start_converting(s3_url, youtube_id):
-    zen = Zencoder(secrets.zencoder_api_key)
+def start_converting(youtube_id, s3_url):
+    zen = Zencoder(zencoder_api_key)
 
     output_config = {
       "base_url": "https://s3.amazonaws.com/KA-youtube-converted/",

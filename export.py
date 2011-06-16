@@ -23,13 +23,13 @@ class YouTubeExporter(object):
             youtube_id, video_filename, video_path = youtube.download(video)
             print "Downloaded video to %s" % video_path
 
-            s3_url = s3.upload_unconverted(youtube_id, video_filename, video_path)
+            s3_url = s3.upload_unconverted_to_s3(youtube_id, video_filename, video_path)
             print "Uploaded video to %s" % s3_url
 
             os.remove(video_path)
             print "Deleted %s" % video_path
 
-            s3_url_converted = zencode.start_converting(s3_url, youtube_id)
+            s3_url_converted = zencode.start_converting(youtube_id, s3_url)
             print "Started converting %s to %s" % (s3_url, s3_url_converted)
 
     # Finish export for all videos that have been converted to downloadable format
@@ -38,12 +38,18 @@ class YouTubeExporter(object):
     def publish_converted_videos():
         print "Searching for converted videos"
 
-        s3_urls = s3.list_converted_video_urls()[:YouTubeExporter.MAX_PUBLISH_PER_RUN]
-        for s3_url in s3_urls:
-            print "Starting publish with %s" % s3_url
+        s3_videos = s3.list_converted_videos()[:YouTubeExporter.MAX_PUBLISH_PER_RUN]
 
-            archive_url = archive.upload_from_s3(s3_url)
-            print "Uploaded via archive.org to %s" % archive_url
+        for s3_video in s3_videos:
+            s3_folder_url = s3_video["url"]
+            youtube_id = s3_video["youtube_id"]
+            print "Starting publish with %s (youtube id: %s)" % (s3_folder_url, youtube_id)
+
+            video_folder_path = s3.download_from_s3(youtube_id, s3_folder_url)
+            print "Downloaded %s to %s" % (s3_folder_url, video_folder_path)
+
+            #archive_url = s3.upload_converted_to_archive(youtube_id, video_filename, video_path)
+            #print "Uploaded via archive.org to %s" % archive_url
 
             # TODO: check HEAD request on archive.org
             # TODO: delete both versions from s3
