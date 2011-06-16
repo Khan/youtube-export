@@ -1,7 +1,8 @@
-import re
-import tempfile
 import os
+import re
 import shutil
+import tempfile
+import time
 
 from util import popen_results
 
@@ -14,6 +15,19 @@ def upload_unconverted_to_s3(youtube_id, video_filename, video_path):
     print results
 
     return s3_url
+
+def clean_up_video_on_s3(youtube_id):
+
+    s3_unconverted_url = "s3://KA-youtube-unconverted/%s/" % youtube_id
+    s3_converted_url = "s3://KA-youtube-converted/%s/" % youtube_id
+
+    command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--recursive", "del", s3_unconverted_url]
+    results = popen_results(command_args)
+    print results
+
+    command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--recursive", "del", s3_converted_url]
+    results = popen_results(command_args)
+    print results
 
 def list_converted_videos():
 
@@ -34,9 +48,6 @@ def list_converted_videos():
 
     return videos
 
-def upload_converted_to_archive(youtube_id, video_filename, video_path):
-    pass
-
 def download_from_s3(youtube_id, s3_folder_url):
 
     temp_dir = tempfile.gettempdir()
@@ -53,3 +64,17 @@ def download_from_s3(youtube_id, s3_folder_url):
     print results
 
     return video_folder_path
+
+def upload_converted_to_archive(youtube_id, video_folder_path):
+
+    archive_bucket_url = "s3://KA-%s" % youtube_id
+
+    command_args = ["s3cmd/s3cmd", "-c", "secrets/archive.s3cfg", "mb", archive_bucket_url]
+    results = popen_results(command_args)
+    print results
+
+    time.sleep(10)
+
+    command_args = ["s3cmd/s3cmd", "-c", "secrets/archive.s3cfg", "--recursive", "put", video_folder_path, archive_bucket_url]
+    results = popen_results(command_args)
+    print results

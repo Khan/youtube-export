@@ -1,5 +1,6 @@
 import optparse
 import os
+import urllib2
 
 import api
 import youtube
@@ -48,12 +49,23 @@ class YouTubeExporter(object):
             video_folder_path = s3.download_from_s3(youtube_id, s3_folder_url)
             print "Downloaded %s to %s" % (s3_folder_url, video_folder_path)
 
-            #archive_url = s3.upload_converted_to_archive(youtube_id, video_filename, video_path)
-            #print "Uploaded via archive.org to %s" % archive_url
+            s3.upload_converted_to_archive(youtube_id, video_folder_path)
+            print "Uploaded via archive.org to %s" % archive_bucket_url
 
-            # TODO: check HEAD request on archive.org
-            # TODO: delete both versions from s3
-            # TODO: update KA API record
+            s3.clean_up_video_on_s3(youtube_id)
+            print "Deleted videos from s3 (youtube id: %s)" % youtube_id
+
+            if YouTubeExporter.confirm_success(youtube_id):
+                print "Confirmed successful upload to archive.org"
+                # TODO: update KA API record
+                pass
+
+    @staticmethod
+    def confirm_success(youtube_id):
+        request = urllib2.Request("http://s3.us.archive.org/KA-%s/%s.mp4" % (youtube_id, youtube_id))
+        request.get_method = lambda: "HEAD"
+        response = urllib2.urlopen(request)
+        return response.code == 200
 
 def main():
 
