@@ -3,6 +3,7 @@ import os
 import api
 import youtube
 import s3
+import zencode
 
 class YouTubeExporter(object):
 
@@ -17,24 +18,24 @@ class YouTubeExporter(object):
     # Start export for all videos that haven't been converted to downloadable format
     @staticmethod
     def handle_new_videos():
-        
         print "Searching for unconverted YouTube videos"
 
         videos = api.list_new_videos()[:YouTubeExporter.MAX_CONVERT_PER_RUN]
         for video in videos:
 
-            print "Converting youtube id: %s" % video["youtube_id"]
+            print "Starting with youtube id %s" % video["youtube_id"]
 
             youtube_id, video_filename, video_path = youtube.download(video)
+            print "Downloaded video to %s" % video_path
 
-            print "Downloaded video to: %s" % video_path
+            s3_url = s3.upload_unconverted(youtube_id, video_filename, video_path)
+            print "Uploaded video to %s" % s3_url
 
-            s3_url = s3.upload_unconverted(video_filename, video_path)
-
-            print "Uploaded video to: %s" % s3_url
-
-            #zencoder.start_converting(filename)
             os.remove(video_path)
+            print "Deleted %s" % video_path
+
+            s3_url_converted = zencode.start_converting(s3_url, youtube_id)
+            print "Started converting %s to %s" % (s3_url, s3_url_converted)
 
     # Finish export for all videos that have been converted to downloadable format
     # but haven't been uploaded to public host yet
