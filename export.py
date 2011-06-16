@@ -57,8 +57,9 @@ class YouTubeExporter(object):
 
             if YouTubeExporter.confirm_success(youtube_id):
                 print "Confirmed successful upload to archive.org"
-                # TODO: update KA API record
-                pass
+
+                if api.update_download_available(youtube_id):
+                    print "Updated KA download_available"
 
     @staticmethod
     def confirm_success(youtube_id):
