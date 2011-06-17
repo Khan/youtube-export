@@ -5,12 +5,14 @@ def start_converting(youtube_id, s3_url):
     zen = Zencoder(zencoder_api_key)
 
     output_config = {
-      "base_url": "https://s3.amazonaws.com/KA-youtube-converted/",
-      "filename": "%s/%s.mp4" % (youtube_id, youtube_id),
-      "video_codec": "mpeg4",
-      "quality": 3,
-      "speed": 3,
-      "type": "segmented",
+        "base_url": "https://s3.amazonaws.com/KA-youtube-converted/",
+        "filename": "%s/%s.m3u8" % (youtube_id, youtube_id),
+        "video_codec": "h264",
+        "quality": 3,
+        "speed": 3,
+        "format": "ts",
+        "type": "segmented",
+        "public": 1,
     }
 
     job = zen.job.create(s3_url, outputs=output_config)

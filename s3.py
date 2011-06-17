@@ -52,7 +52,7 @@ def download_from_s3(youtube_id, s3_folder_url):
 
     temp_dir = tempfile.gettempdir()
 
-    video_folder_path = os.path.join(temp_dir, "%s-converted" % youtube_id)
+    video_folder_path = os.path.join(temp_dir, "%s" % youtube_id)
 
     if os.path.exists(video_folder_path):
         shutil.rmtree(video_folder_path)
@@ -67,16 +67,16 @@ def download_from_s3(youtube_id, s3_folder_url):
 
 def upload_converted_to_archive(youtube_id, video_folder_path):
 
-    archive_bucket_url = "s3://KA-%s" % youtube_id
+    archive_bucket_url = "s3://KA-converted"
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/archive.s3cfg", "mb", archive_bucket_url]
     results = popen_results(command_args)
     print results
 
     time.sleep(10)
-    print "Waiting 10 seconds"
+    print "Waited 10 seconds"
 
-    command_args = ["s3cmd/s3cmd", "-c", "secrets/archive.s3cfg", "--recursive", "put", video_folder_path, archive_bucket_url]
+    command_args = ["s3cmd/s3cmd", "-c", "secrets/archive.s3cfg", "--recursive", "--force", "put", video_folder_path, archive_bucket_url]
     results = popen_results(command_args)
     print results
 

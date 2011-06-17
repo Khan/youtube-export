@@ -61,7 +61,7 @@ class YouTubeExporter(object):
             print "Deleted videos from s3 (youtube id: %s)" % youtube_id
 
             time.sleep(10)
-            print "Waiting 10 seconds"
+            print "Waited 10 seconds"
 
             if YouTubeExporter.confirm_success(youtube_id):
                 print "Confirmed successful upload to archive.org"
@@ -71,7 +71,7 @@ class YouTubeExporter(object):
 
     @staticmethod
     def confirm_success(youtube_id):
-        request = urllib2.Request("http://s3.us.archive.org/KA-%s/%s.mp4" % (youtube_id, youtube_id))
+        request = urllib2.Request("http://s3.us.archive.org/KA-converted/%s/%s.m3u8" % (youtube_id, youtube_id))
         request.get_method = lambda: "HEAD"
         response = urllib2.urlopen(request)
         return response.code == 200
