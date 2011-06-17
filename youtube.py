@@ -15,7 +15,7 @@ def download(video):
     if os.path.exists(video_path):
         os.remove(video_path)
 
-    command_args = ["python", "youtube-dl/youtube-dl.py", "-f", "34", "-icw", "-o", video_path, youtube_url]
+    command_args = ["python", "youtube-dl/youtube-dl.py", "--max-quality", "22", "-icw", "-o", video_path, youtube_url]
     results = popen_results(command_args)
     print results
 
