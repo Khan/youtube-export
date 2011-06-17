@@ -2,6 +2,7 @@ import optparse
 import os
 import time
 import urllib2
+import shutil
 
 import api
 import youtube
