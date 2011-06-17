@@ -6,9 +6,9 @@ import time
 
 from util import popen_results
 
-def upload_unconverted_to_s3(youtube_id, video_filename, video_path):
+def upload_unconverted_to_s3(youtube_id, video_path):
 
-    s3_url = "s3://KA-youtube-unconverted/%s/%s" % (youtube_id, video_filename)
+    s3_url = "s3://KA-youtube-unconverted/%s/%s" % (youtube_id, os.path.basename(video_path))
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--acl-public", "put", video_path, s3_url]
     results = popen_results(command_args)

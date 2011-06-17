@@ -20,10 +20,10 @@ class YouTubeExporter(object):
         for video in videos:
             print "Starting conversion with youtube id %s" % video["youtube_id"]
 
-            youtube_id, video_filename, video_path = youtube.download(video)
+            youtube_id, video_path = youtube.download(video)
             print "Downloaded video to %s" % video_path
 
-            s3_url = s3.upload_unconverted_to_s3(youtube_id, video_filename, video_path)
+            s3_url = s3.upload_unconverted_to_s3(youtube_id, video_path)
             print "Uploaded video to %s" % s3_url
 
             os.remove(video_path)
