@@ -74,7 +74,10 @@ def upload_converted_to_archive(youtube_id, video_folder_path):
     print results
 
     time.sleep(10)
+    print "Waiting 10 seconds"
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/archive.s3cfg", "--recursive", "put", video_folder_path, archive_bucket_url]
     results = popen_results(command_args)
     print results
+
+    return archive_bucket_url

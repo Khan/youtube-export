@@ -1,5 +1,6 @@
 import optparse
 import os
+import time
 import urllib2
 
 import api
@@ -49,11 +50,17 @@ class YouTubeExporter(object):
             video_folder_path = s3.download_from_s3(youtube_id, s3_folder_url)
             print "Downloaded %s to %s" % (s3_folder_url, video_folder_path)
 
-            s3.upload_converted_to_archive(youtube_id, video_folder_path)
+            archive_bucket_url = s3.upload_converted_to_archive(youtube_id, video_folder_path)
             print "Uploaded via archive.org to %s" % archive_bucket_url
+
+            shutil.rmtree(video_folder_path)
+            print "Deleted recursively %s" % video_folder_path
 
             s3.clean_up_video_on_s3(youtube_id)
             print "Deleted videos from s3 (youtube id: %s)" % youtube_id
+
+            time.sleep(10)
+            print "Waiting 10 seconds"
 
             if YouTubeExporter.confirm_success(youtube_id):
                 print "Confirmed successful upload to archive.org"
