@@ -47,7 +47,7 @@ class YouTubeExporter(object):
             youtube_id = converted_video["youtube_id"]
 
             video = dict_videos.get(youtube_id)
-            if video and not video["download_url"]:
+            if video and not video["download_urls"]:
                 print "Found newly converted video with youtube id %s" % youtube_id
         
                 if api.update_download_available(youtube_id):

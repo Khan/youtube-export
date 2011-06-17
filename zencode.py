@@ -6,12 +6,10 @@ def start_converting(youtube_id, s3_url):
 
     output_config = {
         "base_url": "https://s3.amazonaws.com/KA-youtube-converted/",
-        "filename": "%s/%s.m3u8" % (youtube_id, youtube_id),
+        "filename": "%s/%s.mp4" % (youtube_id, youtube_id),
         "video_codec": "h264",
-        "quality": 3,
-        "speed": 3,
-        "format": "ts",
-        "type": "segmented",
+        "quality": 5,
+        "speed": 1,
         "public": 1,
     }
 
