@@ -21,7 +21,7 @@ def list_new_videos():
 
     for playlist in library:
         for video in playlist["videos"]:
-            if not video["download_url"]:
+            if not video["download_urls"]:
                 videos_new.append(video)
 
     return videos_new
