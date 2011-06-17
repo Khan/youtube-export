@@ -1,7 +1,7 @@
 from secrets import zencoder_api_key
 from zencoder import Zencoder
 
-def start_converting(youtube_id, s3_url):
+def start_converting(youtube_id, s3_url, thumbnail_time):
     zen = Zencoder(zencoder_api_key)
 
     output_config = {
@@ -14,6 +14,13 @@ def start_converting(youtube_id, s3_url):
         "type": "segmented",
         "public": 1,
     }
+
+    if thumbnail_time is not None:
+        output_config["thumbnails"] = {
+            "times": [thumbnail_time], 
+            "public": 1,
+            "filename": "%s" % (youtube_id,),
+        }
 
     job = zen.job.create(s3_url, outputs=output_config)
 
