@@ -20,7 +20,7 @@ class YouTubeExporter(object):
         for video in videos:
             print "Starting conversion with youtube id %s" % video["youtube_id"]
 
-            youtube_id, video_path = youtube.download(video)
+            youtube_id, video_path, thumbnail_time = youtube.download(video)
             print "Downloaded video to %s" % video_path
 
             s3_url = s3.upload_unconverted_to_s3(youtube_id, video_path)
@@ -29,7 +29,7 @@ class YouTubeExporter(object):
             os.remove(video_path)
             print "Deleted %s" % video_path
 
-            s3_url_converted = zencode.start_converting(youtube_id, s3_url)
+            s3_url_converted = zencode.start_converting(youtube_id, s3_url, thumbnail_time)
             print "Started converting %s to %s" % (s3_url, s3_url_converted)
 
     # Finish export for all videos that have been converted to downloadable format
