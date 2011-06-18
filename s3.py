@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import shutil
@@ -12,7 +13,7 @@ def upload_unconverted_to_s3(youtube_id, video_path):
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--acl-public", "put", video_path, s3_url]
     results = popen_results(command_args)
-    print results
+    logging.info(results)
 
     return s3_url
 
@@ -23,7 +24,7 @@ def list_converted_videos():
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "ls", s3_url]
     results = popen_results(command_args)
-    print results
+    logging.info(results)
 
     regex = re.compile("s3://KA-youtube-converted/(.+)/")
 
@@ -42,8 +43,8 @@ def clean_up_video_on_s3(youtube_id):
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--recursive", "del", s3_unconverted_url]
     results = popen_results(command_args)
-    print results
+    logging.info(results)
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--recursive", "del", s3_converted_url]
     results = popen_results(command_args)
-    print results
+    logging.info(results)

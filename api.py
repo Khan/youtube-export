@@ -1,4 +1,4 @@
-
+import logging
 import urllib2
 import simplejson
 
@@ -11,9 +11,6 @@ def list_new_videos():
 
     try:
         library = simplejson.loads(file.read())
-    except:
-        # TODO: Error logging here
-        pass
     finally:
         file.close()
 
@@ -43,7 +40,6 @@ def update_download_available(youtube_id):
     oauth_request.sign_request(OAuthSignatureMethod_HMAC_SHA1(), consumer, access_token)
 
     response = urllib2.urlopen(oauth_request.get_normalized_http_url(), data=oauth_request.to_postdata())
-    print response.read()
+    logging.info(response.read())
 
     return response.code == 200
-

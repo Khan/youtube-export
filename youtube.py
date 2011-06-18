@@ -1,3 +1,4 @@
+import logging
 import tempfile
 import os
 from util import popen_results
@@ -23,27 +24,30 @@ def download(video):
     youtube_url = video["url"]
 
     thumbnail_time = None
+
     info_url = "http://gdata.youtube.com/feeds/api/videos/%s?alt=json" % (youtube_id,)
     info_stream = urllib2.urlopen(info_url)
     info = json.load(info_stream)
+
     thumbnails = info["entry"]["media$group"]["media$thumbnail"]
     for t in thumbnails:
         if "2.jpg" in t["url"]:
             thumbnail_time = parse_time(t["time"])
             break
     assert thumbnail_time is not None
-    print "Thumbnail time is", thumbnail_time
+
+    logging.info("Thumbnail time is %s", thumbnail_time)
 
     video_filename_template = youtube_id + ".%(ext)s"
     video_path_template = os.path.join(temp_dir, video_filename_template)
 
     command_args = ["python", "youtube-dl/youtube-dl.py", "--max-quality", "22", "-icw", "-o", video_path_template, youtube_url]
     results = popen_results(command_args)
-    print results
+    logging.info(results)
 
     files = os.listdir(temp_dir)
     assert len(files) == 1
     video_path = os.path.join(temp_dir, files[0])
-    print video_path
+    logging.info(video_path)
 
     return (youtube_id, video_path, thumbnail_time)
