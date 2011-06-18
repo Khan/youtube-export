@@ -1,3 +1,4 @@
+import datetime
 import logging
 import optparse
 import os
@@ -63,10 +64,23 @@ class YouTubeExporter(object):
                 else:
                     logging.error("Unable to update KA download_available for youtube id %s" % youtube_id)
 
-def main():
+def setup_logging(step):
 
-    logging.getLogger().setLevel(logging.DEBUG)
-    logging.basicConfig(format='%(relativeCreated)dms %(message)s')
+    try:
+        os.mkdir("logs")
+    except:
+        pass
+
+    strftime = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+    logging.basicConfig(
+            level = logging.DEBUG,
+            format='%(relativeCreated)dms %(message)s',
+            filename = 'logs/%s_%s.log' % (step, strftime),
+            filemode = 'w'
+    )
+
+def main():
 
     parser = optparse.OptionParser()
 
@@ -75,6 +89,8 @@ def main():
         help="Export step ('convert' or 'publish' currently)", default="convert")
 
     options, args = parser.parse_args()
+
+    setup_logging(options.step)
 
     if options.step == "convert":
         YouTubeExporter.convert_new_videos()
