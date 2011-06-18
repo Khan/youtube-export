@@ -3,4 +3,5 @@ syntax: glob
 *.pyc
 secrets.py
 secrets/*
+logs/*
 
