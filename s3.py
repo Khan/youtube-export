@@ -68,7 +68,7 @@ def download_converted_from_s3(youtube_id):
 
     return video_folder_path
 
-def upload_converted_to_archive(youtube_id):
+def upload_converted_to_archive(youtube_id, create_bucket=False):
 
     video_folder_path = download_converted_from_s3(youtube_id)
     assert(video_folder_path)
@@ -77,13 +77,14 @@ def upload_converted_to_archive(youtube_id):
 
     archive_bucket_url = "s3://KA-youtube-converted"
 
-    logging.info("Making sure archive.org bucket exists")
-    command_args = ["s3cmd/s3cmd", "-c", "secrets/archive.s3cfg", "mb", archive_bucket_url]
-    results = popen_results(command_args)
-    logging.info(results)
+    if create_bucket:
+        logging.info("Making sure archive.org bucket exists")
+        command_args = ["s3cmd/s3cmd", "-c", "secrets/archive.s3cfg", "mb", archive_bucket_url]
+        results = popen_results(command_args)
+        logging.info(results)
 
-    logging.info("Waiting 10 seconds")
-    time.sleep(10)
+        logging.info("Waiting 10 seconds")
+        time.sleep(10)
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/archive.s3cfg", "--recursive", "--force", "put", video_folder_path, archive_bucket_url]
     results = popen_results(command_args)
