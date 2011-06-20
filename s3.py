@@ -25,7 +25,6 @@ def list_converted_videos():
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "ls", s3_url]
     results = popen_results(command_args)
-    logging.info(results)
 
     regex = re.compile("s3://KA-youtube-converted/(.+)/")
 
