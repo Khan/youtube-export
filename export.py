@@ -11,14 +11,12 @@ import zencode
 
 class YouTubeExporter(object):
 
-    MAX_PER_RUN = 1
-
     # Start export for all videos that haven't been converted to downloadable format
     @staticmethod
-    def convert_new_videos():
+    def convert_new_videos(max_videos):
         logging.info("Searching for unconverted videos")
 
-        videos = api.list_new_videos()[:YouTubeExporter.MAX_PER_RUN]
+        videos = api.list_new_videos()[:max_videos]
         for video in videos:
             logging.info("Starting conversion with youtube id %s" % video["youtube_id"])
 
@@ -43,7 +41,7 @@ class YouTubeExporter(object):
 
     # publish export for all videos that have been converted to downloadable format
     @staticmethod
-    def publish_converted_videos():
+    def publish_converted_videos(max_videos):
         logging.info("Searching for converted videos")
 
         videos = api.list_new_videos()
@@ -60,7 +58,7 @@ class YouTubeExporter(object):
             video = dict_videos.get(youtube_id)
             if video and not video["download_urls"]:
 
-                if c_publish_attempts >= YouTubeExporter.MAX_PER_RUN:
+                if c_publish_attempts >= max_videos:
                     break
 
                 logging.info("Found newly converted video with youtube id %s" % youtube_id)
@@ -104,22 +102,26 @@ def main():
 
     parser = optparse.OptionParser()
 
-    parser.add_option('-s', '--step',
+    parser.add_option("-s", "--step",
         action="store", dest="step",
         help="Export step ('convert' or 'publish' currently)", default="convert")
 
-    parser.add_option('-n', '--no-log',
+    parser.add_option("-n", "--no-log",
         action="store_true", dest="nolog",
         help="Don't store log file", default=False)
+
+    parser.add_option("-m", "--max",
+        action="store", dest="max", type="int",
+        help="Maximum number of videos to process", default=1)
 
     options, args = parser.parse_args()
 
     setup_logging(options)
 
     if options.step == "convert":
-        YouTubeExporter.convert_new_videos()
+        YouTubeExporter.convert_new_videos(options.max)
     elif options.step == "publish":
-        YouTubeExporter.publish_converted_videos()
+        YouTubeExporter.publish_converted_videos(options.max)
     else:
         print "Unknown export step."
 
