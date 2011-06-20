@@ -16,6 +16,15 @@ def start_converting(youtube_id, s3_url, thumbnail_time):
         "quality": 5,
         "speed": 1,
         "public": 1,
+        "watermarks": [
+            {
+                "width": 128,
+                "height": 16,
+                "x": -2,
+                "y": -2,
+                "url": "http://www.khanacademy.org/images/watermark.png",
+            }
+        ]
     }
 
     if thumbnail_time is not None:
