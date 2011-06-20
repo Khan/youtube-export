@@ -59,12 +59,18 @@ class YouTubeExporter(object):
             if video and not video["download_urls"]:
                 logging.info("Found newly converted video with youtube id %s" % youtube_id)
         
-                if api.update_download_available(youtube_id):
-                    logging.info("Updated KA download_available")
-                else:
-                    logging.error("Unable to update KA download_available for youtube id %s" % youtube_id)
+                if s3.upload_converted_to_archive(youtube_id):
+                    logging.info("Successfully uploaded to archive.org")
 
-def setup_logging(step):
+                    if api.update_download_available(youtube_id):
+                        logging.info("Updated KA download_available")
+                    else:
+                        logging.error("Unable to update KA download_available for youtube id %s" % youtube_id)
+
+                else:
+                    logging.error("Unable to upload to archive.org")
+
+def setup_logging(options):
 
     try:
         os.mkdir("logs")
@@ -73,12 +79,18 @@ def setup_logging(step):
 
     strftime = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-    logging.basicConfig(
+    if options.nolog:
+        logging.basicConfig(
             level = logging.DEBUG,
             format='%(relativeCreated)dms %(message)s',
-            filename = 'logs/%s_%s.log' % (step, strftime),
+        )
+    else:
+        logging.basicConfig(
+            level = logging.DEBUG,
+            format='%(relativeCreated)dms %(message)s',
+            filename = 'logs/%s_%s.log' % (options.step, strftime),
             filemode = 'w'
-    )
+        )
 
 def main():
 
@@ -88,9 +100,13 @@ def main():
         action="store", dest="step",
         help="Export step ('convert' or 'publish' currently)", default="convert")
 
+    parser.add_option('-n', '--no-log',
+        action="store_true", dest="nolog",
+        help="Don't store log file", default=False)
+
     options, args = parser.parse_args()
 
-    setup_logging(options.step)
+    setup_logging(options)
 
     if options.step == "convert":
         YouTubeExporter.convert_new_videos()
