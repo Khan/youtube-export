@@ -11,14 +11,14 @@ import zencode
 
 class YouTubeExporter(object):
 
-    MAX_CONVERT_PER_RUN = 1
+    MAX_PER_RUN = 1
 
     # Start export for all videos that haven't been converted to downloadable format
     @staticmethod
     def convert_new_videos():
         logging.info("Searching for unconverted videos")
 
-        videos = api.list_new_videos()[:YouTubeExporter.MAX_CONVERT_PER_RUN]
+        videos = api.list_new_videos()[:YouTubeExporter.MAX_PER_RUN]
         for video in videos:
             logging.info("Starting conversion with youtube id %s" % video["youtube_id"])
 
@@ -52,11 +52,17 @@ class YouTubeExporter(object):
         for video in videos:
             dict_videos[video["youtube_id"]] = video
 
+        c_publish_attempts = 0
+
         for converted_video in s3.list_converted_videos():
             youtube_id = converted_video["youtube_id"]
 
             video = dict_videos.get(youtube_id)
             if video and not video["download_urls"]:
+
+                if c_publish_attempts >= YouTubeExporter.MAX_PER_RUN:
+                    break
+
                 logging.info("Found newly converted video with youtube id %s" % youtube_id)
         
                 if s3.upload_converted_to_archive(youtube_id):
@@ -69,6 +75,8 @@ class YouTubeExporter(object):
 
                 else:
                     logging.error("Unable to upload to archive.org")
+
+                c_publish_attempts += 1
 
 def setup_logging(options):
 
