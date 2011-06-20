@@ -99,7 +99,24 @@ def upload_converted_to_archive(youtube_id, create_bucket=False):
     return verify_archive_upload(youtube_id)
 
 def verify_archive_upload(youtube_id):
-    request = urllib2.Request("http://s3.us.archive.org/KA-youtube-converted/%s/%s.mp4" % (youtube_id, youtube_id))
-    request.get_method = lambda: "HEAD"
-    response = urllib2.urlopen(request)
-    return response.code == 200
+
+    c_retries_allowed = 3
+    c_retries = 0
+
+    while c_retries < c_retries_allowed:
+        try:
+            request = urllib2.Request("http://s3.us.archive.org/KA-youtube-converted/%s/%s.mp4" % (youtube_id, youtube_id))
+
+            request.get_method = lambda: "HEAD"
+            response = urllib2.urlopen(request)
+
+            return response.code == 200
+        except urllib2.HTTPError, e:
+            c_retries += 1
+
+            if c_retries < c_retries_allowed:
+                logging.error("Error during archive upload verification attempt %s, trying again" % c_retries)
+            else:
+                logging.error("Error during archive upload verification final attempt: %s" % e)
+
+    return False
