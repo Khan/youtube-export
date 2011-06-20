@@ -119,4 +119,6 @@ def verify_archive_upload(youtube_id):
             else:
                 logging.error("Error during archive upload verification final attempt: %s" % e)
 
+            time.sleep(5)
+
     return False
