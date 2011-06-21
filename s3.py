@@ -104,7 +104,7 @@ def verify_archive_upload(youtube_id):
 
     while c_retries < c_retries_allowed:
         try:
-            request = urllib2.Request("http://s3.us.archive.org/KA-youtube-converted/%s/%s.mp4" % (youtube_id, youtube_id))
+            request = urllib2.Request("http://s3.us.archive.org/KA-youtube-converted/%s.mp4" % youtube_id)
 
             request.get_method = lambda: "HEAD"
             response = urllib2.urlopen(request)
