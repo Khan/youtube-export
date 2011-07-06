@@ -1,2 +1,2 @@
-8 */2 * * * /home/ec2-user/youtube-export/cron/convert.sh
-38 */2 * * * /home/ec2-user/youtube-export/cron/publish.sh
+8 * * * * /home/ec2-user/youtube-export/cron/convert.sh
+38 * * * * /home/ec2-user/youtube-export/cron/publish.sh
