@@ -39,6 +39,8 @@ class YouTubeExporter(object):
 
             assert(s3_url_converted)
 
+	logging.info("Done converting.")
+
     # publish export for all videos that have been converted to downloadable format
     @staticmethod
     def publish_converted_videos(max_videos):
@@ -75,6 +77,8 @@ class YouTubeExporter(object):
                     logging.error("Unable to upload to archive.org")
 
                 c_publish_attempts += 1
+
+	logging.info("Done publishing.")
 
 def setup_logging(options):
 
