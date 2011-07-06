@@ -7,7 +7,7 @@ from secrets import ka_consumer_key, ka_consumer_secret, ka_access_token, ka_acc
 
 def list_new_videos():
 
-    file = urllib2.urlopen("http://www.khanacademy.org/api/v1/playlists/library/list")
+    file = urllib2.urlopen("http://www.khanacademy.org/api/v1/playlists/library/list/fresh")
 
     try:
         library = simplejson.loads(file.read())
