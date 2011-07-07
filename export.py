@@ -17,27 +17,39 @@ class YouTubeExporter(object):
         logging.info("Searching for unconverted videos")
 
         videos = api.list_new_videos()[:max_videos]
+
+        dict_converted = {}
+        for converted_video in s3.list_converted_videos():
+            dict_converted[converted_video["youtube_id"]] = True
+
         for video in videos:
-            logging.info("Starting conversion with youtube id %s" % video["youtube_id"])
 
-            youtube_id, video_path, thumbnail_time = youtube.download(video)
-            logging.info("Downloaded video to %s" % video_path)
+            if dict_converted.get(video["youtube_id"]):
 
-            assert(youtube_id)
-            assert(video_path)
+                logging.info("Skipping conversion for %s because converted video already found on s3" % video["youtube_id"])
+            
+            else:
 
-            s3_url = s3.upload_unconverted_to_s3(youtube_id, video_path)
-            logging.info("Uploaded video to %s" % s3_url)
+                logging.info("Starting conversion with youtube id %s" % video["youtube_id"])
 
-            os.remove(video_path)
-            logging.info("Deleted %s" % video_path)
+                youtube_id, video_path, thumbnail_time = youtube.download(video)
+                logging.info("Downloaded video to %s" % video_path)
 
-            assert(s3_url)
+                assert(youtube_id)
+                assert(video_path)
 
-            s3_url_converted = zencode.start_converting(youtube_id, s3_url, thumbnail_time)
-            logging.info("Started converting %s to %s" % (s3_url, s3_url_converted))
+                s3_url = s3.upload_unconverted_to_s3(youtube_id, video_path)
+                logging.info("Uploaded video to %s" % s3_url)
 
-            assert(s3_url_converted)
+                os.remove(video_path)
+                logging.info("Deleted %s" % video_path)
+
+                assert(s3_url)
+
+                s3_url_converted = zencode.start_converting(youtube_id, s3_url, thumbnail_time)
+                logging.info("Started converting %s to %s" % (s3_url, s3_url_converted))
+
+                assert(s3_url_converted)
 
 	logging.info("Done converting.")
 
