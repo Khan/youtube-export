@@ -67,29 +67,21 @@ def download_converted_from_s3(youtube_id):
 
     return video_folder_path
 
-def upload_converted_to_archive(youtube_id, create_bucket=False):
+def upload_converted_to_archive(youtube_id):
 
     video_folder_path = download_converted_from_s3(youtube_id)
     assert(video_folder_path)
     assert(len(os.listdir(video_folder_path)))
     logging.info("Downloaded youtube id %s from s3 for archive export" % youtube_id)
 
-    archive_bucket_url = "s3://KA-youtube-converted"
-
-    if create_bucket:
-        logging.info("Making sure archive.org bucket exists")
-        command_args = ["s3cmd/s3cmd", "-c", "secrets/archive.s3cfg", "mb", archive_bucket_url]
-        results = popen_results(command_args)
-        logging.info(results)
-
-        logging.info("Waiting 10 seconds")
-        time.sleep(10)
+    archive_bucket_url = "s3://KA-converted-%s" % youtube_id
 
     command_args = [
             "s3cmd/s3cmd", 
             "-c", "secrets/archive.s3cfg", 
             "--recursive", 
             "--force", 
+            "--add-header", "x-archive-auto-make-bucket:1",
             "--add-header", "x-archive-meta01-collection:khanacademy", 
             "--add-header", "x-archive-meta-mediatype:movies", 
             "--add-header", "x-archive-meta01-subject:Salman Khan", 
@@ -113,7 +105,7 @@ def verify_archive_upload(youtube_id):
 
     while c_retries < c_retries_allowed:
         try:
-            request = urllib2.Request("http://s3.us.archive.org/KA-youtube-converted/%s.mp4" % youtube_id)
+            request = urllib2.Request("http://s3.us.archive.org/KA-converted-%s/%s.mp4" % (youtube_id, youtube_id))
 
             request.get_method = lambda: "HEAD"
             response = urllib2.urlopen(request)
