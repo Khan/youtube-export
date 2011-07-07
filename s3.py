@@ -90,7 +90,10 @@ def upload_converted_to_archive(youtube_id, create_bucket=False):
             "-c", "secrets/archive.s3cfg", 
             "--recursive", 
             "--force", 
-            "--add-header", "x-archive-queue-derive:0", 
+            "--add-header", "x-archive-meta01-collection:khanacademy", 
+            "--add-header", "x-archive-meta-mediatype:movies", 
+            "--add-header", "x-archive-meta01-subject:Salman Khan", 
+            "--add-header", "x-archive-meta02-subject:Khan Academy", 
             "put", video_folder_path + "/", archive_bucket_url]
     results = popen_results(command_args)
     logging.info(results)
