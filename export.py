@@ -70,7 +70,7 @@ class YouTubeExporter(object):
             youtube_id = converted_video["youtube_id"]
 
             video = dict_videos.get(youtube_id)
-            if video and not api.has_latest_download_urls(video):
+            if video and not video["download_urls"]:
 
                 if c_publish_attempts >= max_videos:
                     break

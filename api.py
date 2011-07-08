@@ -19,14 +19,10 @@ def list_new_videos():
 
     for playlist in library:
         for video in playlist["videos"]:
-            if not has_latest_download_urls(video):
+            if not video["download_urls"]:
                 videos_new.append(video)
 
     return videos_new
-
-re_archive_url = re.compile("http://s3.us.archive.org/KA-converted-.*")
-def has_latest_download_urls(video):
-    return video and video["download_urls"] and re_archive_url.match(video["download_urls"].get("mp4"))
 
 def update_download_available(youtube_id):
 
