@@ -1,6 +1,5 @@
 import logging
 import urllib2
-import re
 import simplejson
 
 from oauth import OAuthConsumer, OAuthToken, OAuthRequest, OAuthSignatureMethod_HMAC_SHA1
