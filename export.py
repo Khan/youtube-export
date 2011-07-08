@@ -77,7 +77,7 @@ class YouTubeExporter(object):
 
                 logging.info("Found newly converted video with youtube id %s" % youtube_id)
         
-                if s3.upload_converted_to_archive(youtube_id):
+                if s3.upload_converted_to_archive(video):
                     logging.info("Successfully uploaded to archive.org")
 
                     if api.update_download_available(youtube_id):

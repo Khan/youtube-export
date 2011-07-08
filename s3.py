@@ -67,7 +67,9 @@ def download_converted_from_s3(youtube_id):
 
     return video_folder_path
 
-def upload_converted_to_archive(youtube_id):
+def upload_converted_to_archive(video):
+
+    youtube_id = video["youtube_id"]
 
     video_folder_path = download_converted_from_s3(youtube_id)
     assert(video_folder_path)
@@ -83,6 +85,8 @@ def upload_converted_to_archive(youtube_id):
             "--force", 
             "--add-header", "x-archive-auto-make-bucket:1",
             "--add-header", "x-archive-meta-collection:khanacademy", 
+            "--add-header", "x-archive-meta-title:%s" % video["title"], 
+            "--add-header", "x-archive-meta-description:%s" % video["description"], 
             "--add-header", "x-archive-meta-mediatype:movies", 
             "--add-header", "x-archive-meta01-subject:Salman Khan", 
             "--add-header", "x-archive-meta02-subject:Khan Academy", 
