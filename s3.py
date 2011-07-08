@@ -82,7 +82,7 @@ def upload_converted_to_archive(youtube_id):
             "--recursive", 
             "--force", 
             "--add-header", "x-archive-auto-make-bucket:1",
-            "--add-header", "x-archive-meta01-collection:khanacademy", 
+            "--add-header", "x-archive-meta-collection:khanacademy", 
             "--add-header", "x-archive-meta-mediatype:movies", 
             "--add-header", "x-archive-meta01-subject:Salman Khan", 
             "--add-header", "x-archive-meta02-subject:Khan Academy", 
