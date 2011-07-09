@@ -4,6 +4,7 @@ import re
 import shutil
 import tempfile
 import time
+import unicodedata
 import urllib2
 
 from util import popen_results
@@ -78,6 +79,10 @@ def upload_converted_to_archive(video):
 
     archive_bucket_url = "s3://KA-converted-%s" % youtube_id
 
+    # Only pass ascii title and descriptions in headers to archive
+    ascii_title = unicodedata.normalize("NFKD", video["title"]).encode("ascii", "ignore")
+    ascii_description = unicodedata.normalize("NFKD", video["description"]).encode("ascii", "ignore")
+
     command_args = [
             "s3cmd/s3cmd", 
             "-c", "secrets/archive.s3cfg", 
@@ -85,8 +90,8 @@ def upload_converted_to_archive(video):
             "--force", 
             "--add-header", "x-archive-auto-make-bucket:1",
             "--add-header", "x-archive-meta-collection:khanacademy", 
-            "--add-header", "x-archive-meta-title:%s" % video["title"], 
-            "--add-header", "x-archive-meta-description:%s" % video["description"], 
+            "--add-header", "x-archive-meta-title:%s" % ascii_title,
+            "--add-header", "x-archive-meta-description:%s" % ascii_description,
             "--add-header", "x-archive-meta-mediatype:movies", 
             "--add-header", "x-archive-meta01-subject:Salman Khan", 
             "--add-header", "x-archive-meta02-subject:Khan Academy", 
