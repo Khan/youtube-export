@@ -1079,7 +1079,10 @@ class YoutubeIE(InfoExtractor):
 		# Decide which formats to download
 		req_format = self._downloader.params.get('format', None)
 
-		if 'fmt_url_map' in video_info and len(video_info['fmt_url_map']) >= 1 and ',' in video_info['fmt_url_map'][0]:
+		if 'fmt_url_map' in video_info and len(video_info['fmt_url_map']) >= 1:
+			
+			# Comenting out the following comma check to fix https://github.com/rg3/youtube-dl/issues/108
+			# and ',' in video_info['fmt_url_map'][0]:
 			url_map = dict(tuple(pair.split('|')) for pair in video_info['fmt_url_map'][0].split(','))
 			format_limit = self._downloader.params.get('format_limit', None)
 			if format_limit is not None and format_limit in self._available_formats:
