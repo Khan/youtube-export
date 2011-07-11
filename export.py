@@ -8,6 +8,7 @@ import api
 import youtube
 import s3
 import zencode
+import filelock
 
 class YouTubeExporter(object):
 
@@ -134,12 +135,14 @@ def main():
 
     setup_logging(options)
 
-    if options.step == "convert":
-        YouTubeExporter.convert_new_videos(options.max)
-    elif options.step == "publish":
-        YouTubeExporter.publish_converted_videos(options.max)
-    else:
-        print "Unknown export step."
+    # Grab a lock that times out after 2 days
+    with filelock.FileLock("export.lock", timeout=2):
+        if options.step == "convert":
+            YouTubeExporter.convert_new_videos(options.max)
+        elif options.step == "publish":
+            YouTubeExporter.publish_converted_videos(options.max)
+        else:
+            print "Unknown export step."
 
 if __name__ == "__main__":
     main()
