@@ -80,8 +80,8 @@ def upload_converted_to_archive(video):
     archive_bucket_url = "s3://KA-converted-%s" % youtube_id
 
     # Only pass ascii title and descriptions in headers to archive
-    ascii_title = unicodedata.normalize("NFKD", video["title"]).encode("ascii", "ignore")
-    ascii_description = unicodedata.normalize("NFKD", video["description"]).encode("ascii", "ignore")
+    ascii_title = unicodedata.normalize("NFKD", video["title"] or u"").encode("ascii", "ignore")
+    ascii_description = unicodedata.normalize("NFKD", video["description"] or u"").encode("ascii", "ignore")
 
     command_args = [
             "s3cmd/s3cmd", 
