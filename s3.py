@@ -83,6 +83,10 @@ def upload_converted_to_archive(video):
     ascii_title = unicodedata.normalize("NFKD", video["title"] or u"").encode("ascii", "ignore")
     ascii_description = unicodedata.normalize("NFKD", video["description"] or u"").encode("ascii", "ignore")
 
+    # Newlines not welcome in headers
+    ascii_title = ascii_title.replace("\n", " ")
+    ascii_description = ascii_description.replace("\n", " ")
+
     command_args = [
             "s3cmd/s3cmd", 
             "-c", "secrets/archive.s3cfg", 
