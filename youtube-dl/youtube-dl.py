@@ -5,7 +5,7 @@
 # Author: Benjamin Johnson
 # Author: Vasyl' Vavrychuk
 # Author: Witold Baryluk
-# Author: PaweÅ‚ Paprota
+# Author: Paweł Paprota
 # Author: Gergely Imreh
 # License: Public domain code
 import cookielib
@@ -38,7 +38,7 @@ except ImportError:
 	from cgi import parse_qs
 
 std_headers = {
-	'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:2.0b11) Gecko/20100101 Firefox/4.0b11',
+	'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:5.0.1) Gecko/20100101 Firefox/5.0.1',
 	'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
 	'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 	'Accept-Encoding': 'gzip, deflate',
@@ -1079,11 +1079,10 @@ class YoutubeIE(InfoExtractor):
 		# Decide which formats to download
 		req_format = self._downloader.params.get('format', None)
 
-		if 'fmt_url_map' in video_info and len(video_info['fmt_url_map']) >= 1:
-			
-			# Comenting out the following comma check to fix https://github.com/rg3/youtube-dl/issues/108
-			# and ',' in video_info['fmt_url_map'][0]:
-			url_map = dict(tuple(pair.split('|')) for pair in video_info['fmt_url_map'][0].split(','))
+		if 'url_encoded_fmt_stream_map' in video_info and len(video_info['url_encoded_fmt_stream_map']) >= 1:
+			url_data_strs = video_info['url_encoded_fmt_stream_map'][0].split(',')
+			url_data = [dict(pairStr.split('=') for pairStr in uds.split('&')) for uds in url_data_strs]
+			url_map = dict((ud['itag'], urllib.unquote(ud['url'])) for ud in url_data)
 			format_limit = self._downloader.params.get('format_limit', None)
 			if format_limit is not None and format_limit in self._available_formats:
 				format_list = self._available_formats[self._available_formats.index(format_limit):]
@@ -2726,7 +2725,7 @@ if __name__ == '__main__':
 		# Parse command line
 		parser = optparse.OptionParser(
 			usage='Usage: %prog [options] url...',
-			version='2011.03.29',
+			version='2011.08.04',
 			conflict_handler='resolve',
 		)
 
@@ -3002,4 +3001,3 @@ if __name__ == '__main__':
 		sys.exit(u'ERROR: fixed output name but more than one file to download')
 	except KeyboardInterrupt:
 		sys.exit(u'\nERROR: Interrupted by user')
-
