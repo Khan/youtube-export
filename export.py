@@ -81,10 +81,14 @@ class YouTubeExporter(object):
                 if s3.upload_converted_to_archive(video):
                     logging.info("Successfully uploaded to archive.org")
 
-                    if api.update_download_available(youtube_id):
-                        logging.info("Updated KA download_available")
-                    else:
-                        logging.error("Unable to update KA download_available for youtube id %s" % youtube_id)
+                    try:
+                        if api.update_download_available(youtube_id):
+                            logging.info("Updated KA download_available")
+                        else:
+                            logging.error("Unable to update KA download_available for youtube id %s" % youtube_id)
+                    except Exception, e:
+                        logging.error("Crash during update_download_available: %s" % e)
+                        return
 
                 else:
                     logging.error("Unable to upload to archive.org")
