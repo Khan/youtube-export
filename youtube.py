@@ -50,4 +50,4 @@ def download(video):
     video_path = os.path.join(temp_dir, files[0])
     logging.info(video_path)
 
-    return (youtube_id, video_path, thumbnail_time)
+    return (video_path, thumbnail_time)

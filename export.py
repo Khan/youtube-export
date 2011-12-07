@@ -10,92 +10,107 @@ import s3
 import zencode
 import filelock
 
+# This script will make sure we have downloadable content for each video
+# in the following formats.
+DOWNLOADABLE_FORMATS = ["mp4", "png"] # TODO: remove png?
+
 class YouTubeExporter(object):
+    """ Convert our YouTube videos into downloadable formats.
+    
+    1) Take a YouTube URL and download the video to s3.
+    2) Pass it through Zencoder to convert the video into various formats.
+    3) Zencoder places the converted content in a different spot on s3.
+    4) Upload from s3 to archive.org for their (very kind) free hosting.
 
-    # Start export for all videos that haven't been converted to downloadable format
+    """
+
     @staticmethod
-    def convert_new_videos(max_videos):
-        logging.info("Searching for unconverted videos")
+    def convert_missing_downloads(max_videos, dryrun=False):
+        """ Download from YouTube and use Zencoder to start converting any missing downloadable content into
+        its appropriate downloadable format.
+        """
 
-        videos = api.list_new_videos()[:max_videos]
+        logging.info("Searching for videos that are missing downloadable content")
+        videos_converted = 0
 
-        dict_converted = {}
-        for converted_video in s3.list_converted_videos():
-            dict_converted[converted_video["youtube_id"]] = True
+        for video in api.list_videos():
 
-        for video in videos:
+            if videos_converted > max_videos:
+                break
 
-            if dict_converted.get(video["youtube_id"]):
+            formats_to_create = []
 
-                logging.info("Skipping conversion for %s because converted video already found on s3" % video["youtube_id"])
-            
-            else:
+            # Build a list of to-be-created formats for this video
+            for downloadable_format in DOWNLOADABLE_FORMATS:
+                if downloadable_format not in video["downloadable_formats"]:
+                    formats_to_create.append(downloadable_format)
 
-                logging.info("Starting conversion with youtube id %s" % video["youtube_id"])
+            # Don't recreate any formats that are already waiting on s3
+            # but are, for any reason, not known by the API.
+            for format_already_created in s3.list_available_formats(video):
+                formats_to_create.remove(format_already_created)
 
-                youtube_id, video_path, thumbnail_time = youtube.download(video)
-                logging.info("Downloaded video to %s" % video_path)
+            if len(formats_to_create) > 0:
 
-                assert(youtube_id)
-                assert(video_path)
+                logging.info("Starting conversion of %s into formats %s" % (video["youtube_id"], formats_to_create))
 
-                s3_url = s3.upload_unconverted_to_s3(youtube_id, video_path)
-                logging.info("Uploaded video to %s" % s3_url)
+                s3_source_url = s3.get_or_create_unconverted_source_url(video)
+                assert(s3_source_url)
 
-                os.remove(video_path)
-                logging.info("Deleted %s" % video_path)
+                if dryrun:
+                    logging.info("Skipping sending job to zencoder due to dryrun")
+                else:
+                    s3_urls_converting = zencode.start_converting(video, s3_source_url, thumbnail_time, formats_to_create)
+                    assert(s3_urls_converting)
 
-                assert(s3_url)
+                logging.info("Started converting %s to %s" % (s3_source_url, s3_urls_converting))
 
-                s3_url_converted = zencode.start_converting(youtube_id, s3_url, thumbnail_time)
-                logging.info("Started converting %s to %s" % (s3_url, s3_url_converted))
+                videos_converted += 1
 
-                assert(s3_url_converted)
-
-	logging.info("Done converting.")
-
-    # publish export for all videos that have been converted to downloadable format
+    # Publish, to archive.org, all videos that have been converted to downloadable format
     @staticmethod
-    def publish_converted_videos(max_videos):
-        logging.info("Searching for converted videos")
+    def publish_converted_videos(max_videos, dryrun=False):
 
-        videos = api.list_new_videos()
+        logging.info("Searching for downloadable content that needs to be published to archive.org")
 
-        dict_videos = {}
-        for video in videos:
-            dict_videos[video["youtube_id"]] = video
+        # Get a list of all videos that are missing at least one downloadable format
+        missing_content = api.list_missing_video_content(downloadable_formats)
 
         c_publish_attempts = 0
 
-        for converted_video in s3.list_converted_videos():
-            youtube_id = converted_video["youtube_id"]
+        for youtube_id in missing_content:
 
-            video = dict_videos.get(youtube_id)
-            if video and not video["download_urls"]:
+            if c_publish_attempts >= max_videos:
+                break
 
-                if c_publish_attempts >= max_videos:
-                    break
+            video = missing_content[youtube_id]
+            available_formats = s3.list_available_formats(youtube_id)
 
-                logging.info("Found newly converted video with youtube id %s" % youtube_id)
-        
-                if s3.upload_converted_to_archive(video):
-                    logging.info("Successfully uploaded to archive.org")
+            # Publish to archive if we've got new content waiting
+            if len(available_formats) > len(video.downloadable_formats):
 
-                    try:
-                        if api.update_download_available(youtube_id):
-                            logging.info("Updated KA download_available")
-                        else:
-                            logging.error("Unable to update KA download_available for youtube id %s" % youtube_id)
-                    except Exception, e:
-                        logging.error("Crash during update_download_available: %s" % e)
-                        return
+                if dryrun:
+                    logging.info("Skipping upload to archive.org due to dryrun")
 
                 else:
-                    logging.error("Unable to upload to archive.org")
+                    if s3.upload_available_formats_to_archive(video):
+                        logging.info("Successfully uploaded to archive.org")
+
+                        try:
+                            if api.update_download_available(youtube_id, available_formats):
+                                logging.info("Updated KA download_available, set to %s" % available_formats)
+                            else:
+                                logging.error("Unable to update KA download_available for youtube id %s" % youtube_id)
+                        except Exception, e:
+                            logging.error("Crash during update_download_available: %s" % e)
+                            return
+
+                    else:
+                        logging.error("Unable to upload to archive.org")
 
                 c_publish_attempts += 1
 
-	logging.info("Done publishing.")
+        logging.info("Done publishing.")
 
 def setup_logging(options):
 
@@ -135,6 +150,10 @@ def main():
         action="store", dest="max", type="int",
         help="Maximum number of videos to process", default=1)
 
+    parser.add_option("-d", "--dryrun",
+        action="store_true", dest="dryrun",
+        help="Don't start new zencoder jobs or upload to archive.org", default=1)
+
     options, args = parser.parse_args()
 
     setup_logging(options)
@@ -142,9 +161,9 @@ def main():
     # Grab a lock that times out after 2 days
     with filelock.FileLock("export.lock", timeout=2):
         if options.step == "convert":
-            YouTubeExporter.convert_new_videos(options.max)
+            YouTubeExporter.convert_missing_downloads(options.max, options.dryrun)
         elif options.step == "publish":
-            YouTubeExporter.publish_converted_videos(options.max)
+            YouTubeExporter.publish_converted_videos(options.max, options.dryrun)
         else:
             print "Unknown export step."
 

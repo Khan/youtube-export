@@ -5,7 +5,7 @@ import simplejson
 from oauth import OAuthConsumer, OAuthToken, OAuthRequest, OAuthSignatureMethod_HMAC_SHA1
 from secrets import ka_consumer_key, ka_consumer_secret, ka_access_token, ka_access_token_secret
 
-def list_new_videos():
+def list_missing_video_content(downloadable_formats):
 
     file = urllib2.urlopen("http://www.khanacademy.org/api/v1/playlists/library/list/fresh")
 
@@ -14,16 +14,18 @@ def list_new_videos():
     finally:
         file.close()
 
-    videos_new = []
+    missing_content = {}
 
     for playlist in library:
         for video in playlist["videos"]:
-            if not video["download_urls"]:
-                videos_new.append(video)
+            for downloadable_format in downloadable_formats:
+                if downloadable_format not in video.downloadable_formats:
+                    # This video is missing some piece of downloadable content.
+                    missing_content[video.youtube_id] = video
 
-    return videos_new
+    return missing_content
 
-def update_download_available(youtube_id):
+def update_download_available(youtube_id, available_formats):
 
     consumer = OAuthConsumer(ka_consumer_key, ka_consumer_secret)
     access_token = OAuthToken(ka_access_token, ka_access_token_secret)
@@ -34,7 +36,7 @@ def update_download_available(youtube_id):
             token = access_token,
             http_url = url,
             http_method="POST",
-            parameters={"available": "1"},
+            parameters={"formats": ",".join(available_formats)},
             )
 
     oauth_request.sign_request(OAuthSignatureMethod_HMAC_SHA1(), consumer, access_token)

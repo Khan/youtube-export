@@ -9,6 +9,27 @@ import urllib2
 
 from util import popen_results
 
+def get_or_create_unconverted_source_url(video):
+
+    # TODO: undone
+
+                if not s3_url:
+
+                    logging.info("Unconverted video not available on s3 yet, download from youtube and create it.")
+
+                    video_path, thumbnail_time = youtube.download(video)
+                    logging.info("Downloaded video to %s" % video_path)
+
+                    assert(video_path)
+                    assert(thumbnail_time)
+
+                    s3_url = s3.upload_unconverted_to_s3(youtube_id, video_path)
+                    logging.info("Uploaded unconverted video to %s for conversion" % s3_url)
+
+                    os.remove(video_path)
+                    logging.info("Deleted %s" % video_path)
+
+
 def upload_unconverted_to_s3(youtube_id, video_path):
 
     s3_url = "s3://KA-youtube-unconverted/%s/%s" % (youtube_id, os.path.basename(video_path))
