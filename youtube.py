@@ -1,10 +1,11 @@
 import logging
 import tempfile
 import os
-from util import popen_results
 import urllib2
 import json
 import re
+
+from util import popen_results, logger
 
 re_time = re.compile(r"(?P<hour>\d+):(?P<min>\d+):(?P<sec>\d+)(\.(?P<frac>\d+))?")
 
@@ -16,13 +17,7 @@ def parse_time(t):
         secs += float("0.%s" % (m.group("frac"),))
     return secs
 
-def download(video):
-
-    temp_dir = tempfile.mkdtemp()
-
-    youtube_id = video["youtube_id"]
-    youtube_url = video["url"]
-
+def get_thumbnail_time(youtube_id):
     thumbnail_time = None
 
     info_url = "http://gdata.youtube.com/feeds/api/videos/%s?alt=json" % (youtube_id,)
@@ -36,18 +31,24 @@ def download(video):
             break
     assert thumbnail_time is not None
 
-    logging.info("Thumbnail time is %s", thumbnail_time)
+    return thumbnail_time
+
+def download(youtube_id):
+    temp_dir = tempfile.mkdtemp()
+
+    # Fake up a YouTube URL since youtube-dl expects one
+    youtube_url = "http://www.youtube.com/watch?v={0}".format(youtube_id)
 
     video_filename_template = youtube_id + ".%(ext)s"
     video_path_template = os.path.join(temp_dir, video_filename_template)
 
     command_args = ["python", "youtube-dl/youtube-dl.py", "--max-quality", "22", "-icw", "-o", video_path_template, youtube_url]
     results = popen_results(command_args)
-    logging.info(results)
+    logger.info(results)
 
     files = os.listdir(temp_dir)
     assert len(files) == 1
     video_path = os.path.join(temp_dir, files[0])
-    logging.info(video_path)
+    logger.info(video_path)
 
-    return (video_path, thumbnail_time)
+    return video_path

@@ -1,7 +1,9 @@
 import logging
+import youtube
 
 from secrets import zencoder_api_key
 from zencoder import Zencoder
+from util import logger
 
 BASE_URL = "https://s3.amazonaws.com/KA-youtube-converted/"
 
@@ -16,26 +18,28 @@ def output_types():
         ]
     }
 
-def start_converting(video, s3_url, thumbnail_time, formats_to_create):
+def start_converting(youtube_id, s3_url, formats_to_create):
+
+    thumbnail_time = youtube.get_thumbnail_time(youtube_id)
+    assert thumbnail_time
 
     zen = Zencoder(zencoder_api_key)
     outputs = []
 
     for format_to_create in formats_to_create:
         if format_to_create in output_types():
-            outputs += [fxn(video.youtube_id, thumbnail_time) for fxn in output_types()[format_to_create]]
+            outputs += [fxn(youtube_id, thumbnail_time) for fxn in output_types()[format_to_create]]
     
     job = zen.job.create(s3_url, outputs=outputs)
 
     assert(job.code == 201)
 
-    logging.info("Zencoder job created successfully")
-    #return output_config["base_url"] + output_config["filename"]
+    logger.info("Zencoder job created successfully")
 
 def output_mp4(youtube_id, thumbnail_time):
     output = {
         "base_url": BASE_URL,
-        "filename": "%s/%s.mp4" % (youtube_id, youtube_id),
+        "filename": "%s.mp4/%s.mp4" % (youtube_id, youtube_id),
         "video_codec": "h264",
         "tuning": "animation",
         "quality": 5,
@@ -66,7 +70,7 @@ def output_m3u8_playlist(youtube_id, thumbnail_time):
     return {
 		"public": 1,
 		"base_url": BASE_URL,
-        "filename": "%s/%s.m3u8" % (youtube_id, youtube_id),
+        "filename": "%s.m3u8/%s.m3u8" % (youtube_id, youtube_id),
 		"streams": [
             {
 			    "bandwidth": 640,
@@ -100,7 +104,7 @@ def output_m3u8_low(youtube_id, thumbnail_time):
 		"video_bitrate": 30,
 		"type": "segmented",
         "base_url": BASE_URL,
-        "filename": "%s/%s-low.m3u8" % (youtube_id, youtube_id),
+        "filename": "%s.m3u8/%s-low.m3u8" % (youtube_id, youtube_id),
         "watermarks": [
             {
                 "width": 64,
@@ -124,7 +128,7 @@ def output_m3u8_medium(youtube_id, thumbnail_time):
 		"max_video_bitrate": 100,
 		"type": "segmented",
         "base_url": BASE_URL,
-        "filename": "%s/%s-medium.m3u8" % (youtube_id, youtube_id),
+        "filename": "%s.m3u8/%s-medium.m3u8" % (youtube_id, youtube_id),
         "watermarks": [
             {
                 "width": 128,
@@ -145,7 +149,7 @@ def output_m3u8_high(youtube_id, thumbnail_time):
         "quality": 4,
 		"type": "segmented",
         "base_url": BASE_URL,
-        "filename": "%s/%s-high.m3u8" % (youtube_id, youtube_id),
+        "filename": "%s.m3u8/%s-high.m3u8" % (youtube_id, youtube_id),
         "watermarks": [
             {
                 "width": 128,

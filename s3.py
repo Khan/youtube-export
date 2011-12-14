@@ -6,29 +6,57 @@ import tempfile
 import time
 import unicodedata
 import urllib2
+from os.path import splitext
+from collections import defaultdict
+from boto.s3.connection import S3Connection, OrdinaryCallingFormat
+from boto.s3.key import Key
+from secrets import s3_access_key, s3_secret_key
+from util import logger
 
-from util import popen_results
+# We use bucket names with uppercase characters, so we must use OrdinaryCallingFormat
+# instead of the default SubdomainCallingFormat
+connection = S3Connection(s3_access_key, s3_secret_key, calling_format=OrdinaryCallingFormat())
 
-def get_or_create_unconverted_source_url(video):
+converted_bucket = connection.get_bucket("KA-youtube-converted")
+unconverted_bucket = connection.get_bucket("KA-youtube-unconverted")
 
-    # TODO: undone
+# Keys (inside buckets) are in the format YOUTUBE_ID.FORMAT
+# e.g. DK1lCc9b7bg.mp4/ or Dpo_-GrMpNE.m3u8/
+re_video_key_name = re.compile(r"([\w-]+)\.(\w+)/")
 
-                if not s3_url:
+# Older keys are of the form YOUTUBE_ID
+re_legacy_video_key_name = re.compile(r"[\w-]+")
 
-                    logging.info("Unconverted video not available on s3 yet, download from youtube and create it.")
+def get_or_create_unconverted_source_url(youtube_id):
+    matching_keys = list(unconverted_bucket.list(youtube_id))
+    matching_key = None
 
-                    video_path, thumbnail_time = youtube.download(video)
-                    logging.info("Downloaded video to %s" % video_path)
+    if len(matching_keys) > 0:
+        if len(matching_keys) > 1:
+            logger.warning("More than 1 matching unconverted video URL found for video {0}".format(youtube_id))
+        matching_key = matching_keys[0]
+    else:
+        logger.info("Unconverted video not available on s3 yet, downloading from youtube to create it.")
 
-                    assert(video_path)
-                    assert(thumbnail_time)
+        video_path = youtube.download(youtube_id)
+        logger.info("Downloaded video to {0}".format(video_path))
 
-                    s3_url = s3.upload_unconverted_to_s3(youtube_id, video_path)
-                    logging.info("Uploaded unconverted video to %s for conversion" % s3_url)
+        assert(video_path)
 
-                    os.remove(video_path)
-                    logging.info("Deleted %s" % video_path)
+        video_extension = splitext(video_path)
+        assert video_extension[0] == "."
+        video_extension = video_extension[1:]
+        if video_extension not in ["flv", "mp4"]:
+            logger.warning("Unrecognized video extension {0} when downloading video {1} from YouTube".format(video_extension, youtube_id))
 
+        matching_key = Key(unconverted_bucket)
+        matching_key.key = "{0}/{0}.{1}".format(youtube_id, video_extension)
+        matching_key.set_contents_from_filename(video_path)
+
+        os.remove(video_path)
+        logger.info("Deleted {0}".format(video_path))
+
+    return "s3://{0}/{1}".format(unconverted_bucket.name, matching_key.name)
 
 def upload_unconverted_to_s3(youtube_id, video_path):
 
@@ -36,27 +64,25 @@ def upload_unconverted_to_s3(youtube_id, video_path):
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--acl-public", "put", video_path, s3_url]
     results = popen_results(command_args)
-    logging.info(results)
+    logger.info(results)
 
     return s3_url
 
 def list_converted_videos():
-
-    videos = []
-    s3_url = "s3://KA-youtube-converted"
-
-    command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "ls", s3_url]
-    results = popen_results(command_args)
-
-    regex = re.compile("s3://KA-youtube-converted/(.+)/")
-
-    for match in regex.finditer(results):
-        videos.append({
-                "url": match.group(),
-                "youtube_id": match.groups()[0]
-            })
-
-    return videos
+    """Returns a dict that maps youtube_ids (keys) to a set of available converted formats (values)"""
+    converted_videos = defaultdict(set)
+    legacy_video_keys = set()
+    for key in converted_bucket.list(delimiter="/"):
+        video_match = re_video_key_name.match(key.name)
+        if video_match is None:
+            if re_legacy_video_key_name.match(key.name) is not None:
+                legacy_video_keys.add(key.name)
+            else:
+                logger.warning("Unrecognized key {0} is not in format YOUTUBE_ID.FORMAT/".format(key.name))
+        else:
+            converted_videos[video_match.group(1)].add(video_match.group(2))
+    logger.info("{0} legacy converted videos were ignored".format(len(legacy_video_keys)))
+    return converted_videos
 
 def clean_up_video_on_s3(youtube_id):
 
@@ -65,11 +91,11 @@ def clean_up_video_on_s3(youtube_id):
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--recursive", "del", s3_unconverted_url]
     results = popen_results(command_args)
-    logging.info(results)
+    logger.info(results)
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--recursive", "del", s3_converted_url]
     results = popen_results(command_args)
-    logging.info(results)
+    logger.info(results)
 
 def download_converted_from_s3(youtube_id):
 
@@ -85,7 +111,7 @@ def download_converted_from_s3(youtube_id):
 
     command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--recursive", "get", s3_folder_url, video_folder_path]
     results = popen_results(command_args)
-    logging.info(results)
+    logger.info(results)
 
     return video_folder_path
 
@@ -96,7 +122,7 @@ def upload_converted_to_archive(video):
     video_folder_path = download_converted_from_s3(youtube_id)
     assert(video_folder_path)
     assert(len(os.listdir(video_folder_path)))
-    logging.info("Downloaded youtube id %s from s3 for archive export" % youtube_id)
+    logger.info("Downloaded youtube id %s from s3 for archive export" % youtube_id)
 
     archive_bucket_url = "s3://KA-converted-%s" % youtube_id
 
@@ -122,13 +148,13 @@ def upload_converted_to_archive(video):
             "--add-header", "x-archive-meta02-subject:Khan Academy", 
             "put", video_folder_path + "/", archive_bucket_url]
     results = popen_results(command_args)
-    logging.info(results)
+    logger.info(results)
 
-    logging.info("Waiting 10 seconds")
+    logger.info("Waiting 10 seconds")
     time.sleep(10)
 
     shutil.rmtree(video_folder_path)
-    logging.info("Cleaned up local video folder path")
+    logger.info("Cleaned up local video folder path")
 
     return verify_archive_upload(youtube_id)
 
@@ -149,9 +175,9 @@ def verify_archive_upload(youtube_id):
             c_retries += 1
 
             if c_retries < c_retries_allowed:
-                logging.error("Error during archive upload verification attempt %s, trying again" % c_retries)
+                logger.error("Error during archive upload verification attempt %s, trying again" % c_retries)
             else:
-                logging.error("Error during archive upload verification final attempt: %s" % e)
+                logger.error("Error during archive upload verification final attempt: %s" % e)
 
             time.sleep(5)
 

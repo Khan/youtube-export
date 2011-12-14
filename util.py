@@ -7,7 +7,9 @@ def popen_results(args):
     results = proc.communicate()
 
     if results[1]:
-        logging.error("Error during popen with command line '%s'" % args)
-        logging.error(results[1])
+        logger.error("Error during popen with command line '%s'" % args)
+        logger.error(results[1])
 
     return results[0]
+
+logger = logging.getLogger("khan")
