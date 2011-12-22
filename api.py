@@ -6,18 +6,23 @@ from oauth import OAuthConsumer, OAuthToken, OAuthRequest, OAuthSignatureMethod_
 from secrets import ka_consumer_key, ka_consumer_secret, ka_access_token, ka_access_token_secret
 from util import logger
 
+_library = None
+def get_library():
+    global _library
+    if _library is None:
+        fresh = urllib2.urlopen("http://www.khanacademy.org/api/v1/playlists/library/list/fresh")
+        try:
+            _library = simplejson.load(fresh)
+        finally:
+            fresh.close()
+    return _library
+
 def list_missing_video_content(downloadable_formats):
-
-    fresh = urllib2.urlopen("http://www.khanacademy.org/api/v1/playlists/library/list/fresh")
-
-    try:
-        library = simplejson.load(fresh)
-    finally:
-        fresh.close()
+    """Returns a dictionary mapping youtube IDs to formats missing from the API, relative to the downloadable_formats parameter"""
 
     missing_content = {}
 
-    for playlist in library:
+    for playlist in get_library():
         for video in playlist["videos"]:
             download_urls = video["download_urls"]
             if download_urls is None:
@@ -27,6 +32,13 @@ def list_missing_video_content(downloadable_formats):
                 missing_content[video["youtube_id"]] = missing_formats
 
     return missing_content
+
+def video_metadata(youtube_id):
+    """Returns metadata dict (title, description, etc.) for a given youtube_id."""
+    for playlist in get_library():
+        for video in playlist["videos"]:
+            if video["youtube_id"] == youtube_id:
+                return video
 
 def update_download_available(youtube_id, available_formats):
 

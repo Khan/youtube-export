@@ -45,22 +45,22 @@ class YouTubeExporter(object):
             already_converted_still_unpublished = converted_videos[youtube_id] & missing_formats
             if len(already_converted_still_unpublished) > 0:
                 logger.info("Video %s missing formats %s which are already converted, but unpublished; use publish step" % (youtube_id, ",".join(already_converted_still_unpublished)))
-            
+
             formats_to_create = missing_formats - already_converted_still_unpublished
-            
-            if len(formats_to_create) > 0:
+            if len(formats_to_create) == 0:
+                continue
 
-                logger.info("Starting conversion of %s into formats %s" % (youtube_id, ",".join(formats_to_create)))
+            logger.info("Starting conversion of %s into formats %s" % (youtube_id, ",".join(formats_to_create)))
 
-                s3_source_url = s3.get_or_create_unconverted_source_url(youtube_id)
-                assert(s3_source_url)
+            s3_source_url = s3.get_or_create_unconverted_source_url(youtube_id)
+            assert(s3_source_url)
 
-                if dryrun:
-                    logger.info("Skipping sending job to zencoder due to dryrun")
-                else:
-                    zencode.start_converting(youtube_id, s3_source_url, formats_to_create)
+            if dryrun:
+                logger.info("Skipping sending job to zencoder due to dryrun")
+            else:
+                zencode.start_converting(youtube_id, s3_source_url, formats_to_create)
 
-                videos_converted += 1
+            videos_converted += 1
 
     # Publish, to archive.org, all videos that have been converted to downloadable format
     @staticmethod
@@ -76,36 +76,35 @@ class YouTubeExporter(object):
                 logger.info("Stopping: max videos reached")
                 break
 
-            available_converted_formats = converted_videos[youtube_id] & missing_formats
+            converted_missing_formats = converted_videos[youtube_id] & missing_formats
 
-            unconverted_formats = missing_formats - available_converted_formats
+            unconverted_formats = missing_formats - converted_missing_formats
             if len(unconverted_formats) > 0:
                 logger.info("Video %s missing formats %s which are still unconverted, can't be published" % (youtube_id, ",".join(unconverted_formats)))
 
-            # Publish to archive if we've got new content waiting
-            if len(available_converted_formats) > 0:
+            # If no converted content waiting, just continue to next video
+            if len(converted_missing_formats) == 0:
+                continue
 
-                if dryrun:
-                    logger.info("Skipping upload to archive.org for video {0} due to dryrun".format(youtube_id))
-                else:
-                    if s3.upload_available_formats_to_archive(video):
-                        logger.info("Successfully uploaded to archive.org")
+            if dryrun:
+                logger.info("Skipping upload to archive.org for video {0} formats {1} due to dryrun".format(youtube_id, ", ".join(converted_missing_formats)))
+            else:
+                if s3.upload_converted_to_archive(youtube_id, converted_missing_formats):
+                    logger.info("Successfully uploaded to archive.org")
+                    break
 
-                        try:
-                            if api.update_download_available(youtube_id, available_formats):
-                                logger.info("Updated KA download_available, set to %s" % available_formats)
-                            else:
-                                logger.error("Unable to update KA download_available for youtube id %s" % youtube_id)
-                        except Exception, e:
-                            logger.error("Crash during update_download_available: %s" % e)
-                            return
-
+                    current_format_downloads = (api.video_metadata(youtube_id)["download_urls"] or {})
+                    current_formats = set(current_format_downloads.keys())
+                    new_formats = current_formats | converted_missing_formats
+                    if api.update_download_available(youtube_id, new_formats):
+                        logger.info("Updated KA download_available, set to {0} for video {1}".format(", ".join(new_formats), youtube_id))
                     else:
-                        logger.error("Unable to upload to archive.org")
+                        logger.error("Unable to update KA download_available to {0} for youtube id {1}".format(", ".join(new_formats), youtube_id))
+                else:
+                    logger.error("Unable to upload to archive.org")
 
-                publish_attempts += 1
+            publish_attempts += 1
 
-        logger.info("Done publishing.")
 
 def setup_logging(options):
     formatter = logging.Formatter(fmt='%(relativeCreated)dms %(message)s')

@@ -6,19 +6,28 @@ import tempfile
 import time
 import unicodedata
 import urllib2
+import api
 from os.path import splitext
 from collections import defaultdict
+from progressbar import ProgressBar
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 from boto.s3.key import Key
-from secrets import s3_access_key, s3_secret_key
+from secrets import (
+    s3_access_key, 
+    s3_secret_key, 
+    archive_access_key, 
+    archive_secret_key
+)
 from util import logger
 
 # We use bucket names with uppercase characters, so we must use OrdinaryCallingFormat
 # instead of the default SubdomainCallingFormat
-connection = S3Connection(s3_access_key, s3_secret_key, calling_format=OrdinaryCallingFormat())
+s3_connection = S3Connection(s3_access_key, s3_secret_key, calling_format=OrdinaryCallingFormat())
 
-converted_bucket = connection.get_bucket("KA-youtube-converted")
-unconverted_bucket = connection.get_bucket("KA-youtube-unconverted")
+converted_bucket = s3_connection.get_bucket("KA-youtube-converted")
+unconverted_bucket = s3_connection.get_bucket("KA-youtube-unconverted")
+
+archive_connection = S3Connection(archive_access_key, archive_secret_key, host="s3.us.archive.org", is_secure=False, calling_format=OrdinaryCallingFormat())
 
 # Keys (inside buckets) are in the format YOUTUBE_ID.FORMAT
 # e.g. DK1lCc9b7bg.mp4/ or Dpo_-GrMpNE.m3u8/
@@ -49,24 +58,13 @@ def get_or_create_unconverted_source_url(youtube_id):
         if video_extension not in ["flv", "mp4"]:
             logger.warning("Unrecognized video extension {0} when downloading video {1} from YouTube".format(video_extension, youtube_id))
 
-        matching_key = Key(unconverted_bucket)
-        matching_key.key = "{0}/{0}.{1}".format(youtube_id, video_extension)
+        matching_key = Key(unconverted_bucket, "{0}/{0}.{1}".format(youtube_id, video_extension))
         matching_key.set_contents_from_filename(video_path)
 
         os.remove(video_path)
         logger.info("Deleted {0}".format(video_path))
 
     return "s3://{0}/{1}".format(unconverted_bucket.name, matching_key.name)
-
-def upload_unconverted_to_s3(youtube_id, video_path):
-
-    s3_url = "s3://KA-youtube-unconverted/%s/%s" % (youtube_id, os.path.basename(video_path))
-
-    command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--acl-public", "put", video_path, s3_url]
-    results = popen_results(command_args)
-    logger.info(results)
-
-    return s3_url
 
 def list_converted_videos():
     """Returns a dict that maps youtube_ids (keys) to a set of available converted formats (values)"""
@@ -84,88 +82,89 @@ def list_converted_videos():
     logger.info("{0} legacy converted videos were ignored".format(len(legacy_video_keys)))
     return converted_videos
 
-def clean_up_video_on_s3(youtube_id):
+def upload_converted_to_archive(youtube_id, formats_to_upload):
+    dest_bucket = archive_connection.get_bucket("KA-converted-{0}".format(youtube_id))
 
-    s3_unconverted_url = "s3://KA-youtube-unconverted/%s/" % youtube_id
-    s3_converted_url = "s3://KA-youtube-converted/%s/" % youtube_id
+    source_keys_for_format = defaultdict(list)
+    for key in list(converted_bucket.list(youtube_id)):
+        video_match = re_video_key_name.match(key.name)
+        if video_match is None:
+            if re_legacy_video_key_name.match(key.name) is None:
+                logger.info("Unrecognized file in converted bucket {0}".format(key.name))
+            continue
+        assert video_match.group(1) == youtube_id
+        # Maps format (mp4, m3u8, etc) to list of keys
+        source_keys_for_format[video_match.group(2)].append(key)
 
-    command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--recursive", "del", s3_unconverted_url]
-    results = popen_results(command_args)
-    logger.info(results)
+    for format in formats_to_upload:
+        if len(source_keys_for_format[format]) == 0:
+            logger.error("Requested upload of format {0} for video {1} to archive.org, but unable to find video format in converted bucket".format(format, youtube_id))
+            return False
 
-    command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--recursive", "del", s3_converted_url]
-    results = popen_results(command_args)
-    logger.info(results)
+    # Fetch the video metadata so we can specify title and description to archive.org
+    video_metadata = api.video_metadata(youtube_id)
 
-def download_converted_from_s3(youtube_id):
+    # Only pass ascii title and descriptions in headers to archive, and strip newlines
+    def normalize_for_header(s):
+        return unicodedata.normalize("NFKD", s or u"").encode("ascii", "ignore").replace("\n", "")
 
-    s3_folder_url = "s3://KA-youtube-converted/%s/" % youtube_id
+    uploaded_filenames = []
 
-    temp_dir = tempfile.gettempdir()
-    video_folder_path = os.path.join(temp_dir, youtube_id)
+    for format in formats_to_upload:
+        for key in source_keys_for_format[format]:
+            video_match = re_video_key_name.match(key.name)
+            assert video_match.group(1) == youtube_id
+            assert video_match.group(2) == format
+            video_prefix = video_match.group()
+            assert key.name.startswith(video_prefix)
+            destination_name = key.name[len(video_prefix):]
+            assert "/" not in destination_name # Don't expect more than one level of nesting
+            
+            logger.debug("Copying file {0} to archive.org".format(destination_name))
+            
+            with tempfile.TemporaryFile() as t:
+                pbar = ProgressBar(maxval=100).start()
+                def get_cb(bytes_sent, bytes_total):
+                    pbar.update(50.0 * bytes_sent / bytes_total)
+                def send_cb(bytes_sent, bytes_total):
+                    pbar.update(50.0 + 50.0 * bytes_sent / bytes_total)
+                key.get_file(t, cb=get_cb)
+                
+                t.seek(0)
+                dest_key = Key(dest_bucket, destination_name)
+                headers = {
+                    "x-archive-auto-make-bucket": "1",
+                    "x-archive-meta-collection": "khanacademy", 
+                    "x-archive-meta-title": normalize_for_header(video_metadata["title"]),
+                    "x-archive-meta-description": normalize_for_header(video_metadata["description"]),
+                    "x-archive-meta-mediatype": "movies", 
+                    "x-archive-meta01-subject": "Salman Khan", 
+                    "x-archive-meta02-subject": "Khan Academy",
+                }
+                dest_key.set_contents_from_file(t, headers=headers, cb=send_cb)
+                pbar.finish()
+                
+                uploaded_filenames.append(destination_name)
 
-    if os.path.exists(video_folder_path):
-        shutil.rmtree(video_folder_path)
-
-    os.mkdir(video_folder_path)
-
-    command_args = ["s3cmd/s3cmd", "-c", "secrets/s3.s3cfg", "--recursive", "get", s3_folder_url, video_folder_path]
-    results = popen_results(command_args)
-    logger.info(results)
-
-    return video_folder_path
-
-def upload_converted_to_archive(video):
-
-    youtube_id = video["youtube_id"]
-
-    video_folder_path = download_converted_from_s3(youtube_id)
-    assert(video_folder_path)
-    assert(len(os.listdir(video_folder_path)))
-    logger.info("Downloaded youtube id %s from s3 for archive export" % youtube_id)
-
-    archive_bucket_url = "s3://KA-converted-%s" % youtube_id
-
-    # Only pass ascii title and descriptions in headers to archive
-    ascii_title = unicodedata.normalize("NFKD", video["title"] or u"").encode("ascii", "ignore")
-    ascii_description = unicodedata.normalize("NFKD", video["description"] or u"").encode("ascii", "ignore")
-
-    # Newlines not welcome in headers
-    ascii_title = ascii_title.replace("\n", " ")
-    ascii_description = ascii_description.replace("\n", " ")
-
-    command_args = [
-            "s3cmd/s3cmd", 
-            "-c", "secrets/archive.s3cfg", 
-            "--recursive", 
-            "--force", 
-            "--add-header", "x-archive-auto-make-bucket:1",
-            "--add-header", "x-archive-meta-collection:khanacademy", 
-            "--add-header", "x-archive-meta-title:%s" % ascii_title,
-            "--add-header", "x-archive-meta-description:%s" % ascii_description,
-            "--add-header", "x-archive-meta-mediatype:movies", 
-            "--add-header", "x-archive-meta01-subject:Salman Khan", 
-            "--add-header", "x-archive-meta02-subject:Khan Academy", 
-            "put", video_folder_path + "/", archive_bucket_url]
-    results = popen_results(command_args)
-    logger.info(results)
-
-    logger.info("Waiting 10 seconds")
+    logger.debug("Waiting 10 seconds for uploads to propagate")
     time.sleep(10)
 
-    shutil.rmtree(video_folder_path)
-    logger.info("Cleaned up local video folder path")
+    for destination_name in uploaded_filenames:
+        if verify_archive_upload(youtube_id, destination_name):
+            logger.error("Verified upload {0}/{1}".format(youtube_id, destination_name))
+        else:
+            logger.error("Unable to verify upload {0}/{1}".format(youtube_id, destination_name))
+            return False
 
-    return verify_archive_upload(youtube_id)
+    return True
 
-def verify_archive_upload(youtube_id):
-
-    c_retries_allowed = 3
+def verify_archive_upload(youtube_id, filename):
+    c_retries_allowed = 5
     c_retries = 0
 
     while c_retries < c_retries_allowed:
         try:
-            request = urllib2.Request("http://s3.us.archive.org/KA-converted-%s/%s.mp4" % (youtube_id, youtube_id))
+            request = urllib2.Request("http://s3.us.archive.org/KA-converted-{0}/{1}".format(youtube_id, filename))
 
             request.get_method = lambda: "HEAD"
             response = urllib2.urlopen(request)
@@ -179,6 +178,6 @@ def verify_archive_upload(youtube_id):
             else:
                 logger.error("Error during archive upload verification final attempt: %s" % e)
 
-            time.sleep(5)
+            time.sleep(10)
 
     return False
