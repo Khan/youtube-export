@@ -58,10 +58,9 @@ def output_mp4(youtube_id, thumbnail_time):
 
     if thumbnail_time is not None:
         output["thumbnails"] = {
-            "base_url": BASE_URL + youtube_id,
             "times": [thumbnail_time], 
             "public": 1,
-            "filename": "%s" % youtube_id,
+            "filename": "%s.mp4/%s" % (youtube_id, youtube_id),
         }
 
     return output
