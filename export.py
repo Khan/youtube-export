@@ -91,7 +91,6 @@ class YouTubeExporter(object):
             else:
                 if s3.upload_converted_to_archive(youtube_id, converted_missing_formats):
                     logger.info("Successfully uploaded to archive.org")
-                    break
 
                     current_format_downloads = (api.video_metadata(youtube_id)["download_urls"] or {})
                     current_formats = set(current_format_downloads.keys())
@@ -101,7 +100,7 @@ class YouTubeExporter(object):
                     else:
                         logger.error("Unable to update KA download_available to {0} for youtube id {1}".format(", ".join(new_formats), youtube_id))
                 else:
-                    logger.error("Unable to upload to archive.org")
+                    logger.error("Unable to upload video {0} to archive.org".format(youtube_id))
 
             publish_attempts += 1
 

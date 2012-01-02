@@ -7,6 +7,7 @@ import time
 import unicodedata
 import urllib2
 import api
+from datetime import datetime, timedelta
 from os.path import splitext
 from collections import defaultdict
 from progressbar import ProgressBar
@@ -92,9 +93,17 @@ def upload_converted_to_archive(youtube_id, formats_to_upload):
             if re_legacy_video_key_name.match(key.name) is None:
                 logger.info("Unrecognized file in converted bucket {0}".format(key.name))
             continue
+
         assert video_match.group(1) == youtube_id
+        format = video_match.group(2)
+
+        modification_date = datetime.strptime(key.last_modified, "%Y-%m-%dT%H:%M:%S.%fZ")
+        if datetime.now() - modification_date < timedelta(hours=1):
+            logger.error("Format {0} for video {1} appeared ready on S3, but further inspection showed Zencoder may still be uploading it.".format(format, youtube_id))
+            return False
+
         # Maps format (mp4, m3u8, etc) to list of keys
-        source_keys_for_format[video_match.group(2)].append(key)
+        source_keys_for_format[format].append(key)
 
     for format in formats_to_upload:
         if len(source_keys_for_format[format]) == 0:
