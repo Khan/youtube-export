@@ -98,8 +98,8 @@ def upload_converted_to_archive(youtube_id, formats_to_upload):
         format = video_match.group(2)
 
         modification_date = datetime.strptime(key.last_modified, "%Y-%m-%dT%H:%M:%S.%fZ")
-        if datetime.now() - modification_date < timedelta(hours=1):
-            logger.error("Format {0} for video {1} appeared ready on S3, but further inspection showed Zencoder may still be uploading it.".format(format, youtube_id))
+        if datetime.utcnow() - modification_date < timedelta(hours=1):
+            logger.error("Format {0} for video {1} appeared ready on S3, but further inspection showed Zencoder may still be uploading it. Modification date {2}".format(format, youtube_id, modification_date))
             return False
 
         # Maps format (mp4, m3u8, etc) to list of keys
