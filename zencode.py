@@ -30,9 +30,9 @@ def start_converting(youtube_id, s3_url, formats_to_create):
         if format_to_create in output_types():
             outputs += [fxn(youtube_id, thumbnail_time) for fxn in output_types()[format_to_create]]
     
-    job = zen.job.create(s3_url, outputs=outputs)
+    job_response = zen.job.create(s3_url, outputs=outputs)
 
-    assert(job.code == 201)
+    assert job_response.code == 201, job_response.body
 
     logger.info("Zencoder job created successfully")
 
@@ -60,7 +60,8 @@ def output_mp4(youtube_id, thumbnail_time):
         output["thumbnails"] = {
             "times": [thumbnail_time], 
             "public": 1,
-            "filename": "%s.mp4/%s" % (youtube_id, youtube_id),
+            "base_url": "{0}{1}.mp4/".format(BASE_URL, youtube_id),
+            "filename": youtube_id,
         }
 
     return output
