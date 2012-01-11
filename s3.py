@@ -29,6 +29,7 @@ converted_bucket = s3_connection.get_bucket("KA-youtube-converted")
 unconverted_bucket = s3_connection.get_bucket("KA-youtube-unconverted")
 
 archive_connection = S3Connection(archive_access_key, archive_secret_key, host="s3.us.archive.org", is_secure=False, calling_format=OrdinaryCallingFormat())
+archive_connection.num_retries = 12
 
 # Keys (inside buckets) are in the format YOUTUBE_ID.FORMAT
 # e.g. DK1lCc9b7bg.mp4/ or Dpo_-GrMpNE.m3u8/
