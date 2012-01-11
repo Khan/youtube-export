@@ -7,6 +7,7 @@ import time
 import unicodedata
 import urllib2
 import api
+import youtube
 from datetime import datetime, timedelta
 from os.path import splitext
 from collections import defaultdict
