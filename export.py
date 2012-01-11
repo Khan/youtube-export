@@ -102,10 +102,10 @@ class YouTubeExporter(object):
                         logger.info("Updated KA download_available, set to {0} for video {1}".format(", ".join(new_formats), youtube_id))
                     else:
                         logger.error("Unable to update KA download_available to {0} for youtube id {1}".format(", ".join(new_formats), youtube_id))
+
+                    publish_attempts += 1
                 else:
                     logger.error("Unable to upload video {0} to archive.org".format(youtube_id))
-
-            publish_attempts += 1
 
 
 def setup_logging(options):
