@@ -55,7 +55,7 @@ def get_or_create_unconverted_source_url(youtube_id):
 
         assert(video_path)
 
-        video_extension = splitext(video_path)
+        video_extension = splitext(video_path)[1]
         assert video_extension[0] == "."
         video_extension = video_extension[1:]
         if video_extension not in ["flv", "mp4"]:
