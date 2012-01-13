@@ -159,9 +159,9 @@ def upload_converted_to_archive(youtube_id, formats_to_upload):
                 for attempt in xrange(10):
                     try:
                         dest_key.set_contents_from_file(t, headers=headers, cb=send_cb)
-                    except e as BotoServerError:
+                        break
+                    except BotoServerError as e:
                         logger.error("Error {0} {1} during upload attempt {2} to archive.org.".format(e.status, e.reason, attempt))
-                    break
                 else:
                     raise Exception("Gave up publish attempt due to server errors")
                 pbar.finish()
