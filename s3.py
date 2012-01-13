@@ -90,7 +90,13 @@ def list_converted_videos():
     return converted_videos
 
 def upload_converted_to_archive(youtube_id, formats_to_upload):
-    dest_bucket = archive_connection.get_bucket("KA-converted-{0}".format(youtube_id))
+    # The bucket may not exist yet on archive.org. Unfortunately create_bucket
+    # is broken in boto (it requires all-lowercase, despite the fact that
+    # we're using OrdinaryCallingFormat). Fortunately get_bucket can be told
+    # to not check that the bucket exists with the validate=False flag, and 
+    # the "x-archive-auto-make-bucket" header we pass below automatically
+    # creates the bucket with the first upload.
+    dest_bucket = archive_connection.get_bucket("KA-converted-{0}".format(youtube_id), validate=False)
 
     source_keys_for_format = defaultdict(list)
     for key in list(converted_bucket.list(youtube_id)):
