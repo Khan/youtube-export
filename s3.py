@@ -14,6 +14,7 @@ from collections import defaultdict
 from progressbar import ProgressBar
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 from boto.s3.key import Key
+from boto.exception import BotoServerError
 from secrets import (
     s3_access_key, 
     s3_secret_key, 
@@ -30,7 +31,10 @@ converted_bucket = s3_connection.get_bucket("KA-youtube-converted")
 unconverted_bucket = s3_connection.get_bucket("KA-youtube-unconverted")
 
 archive_connection = S3Connection(archive_access_key, archive_secret_key, host="s3.us.archive.org", is_secure=False, calling_format=OrdinaryCallingFormat())
-archive_connection.num_retries = 12
+# You can up the num_retries for the connection like this:
+#archive_connection.num_retries = 12
+# However, S3Connection uses exponential backoff which is a bit excessive.
+# Instead we have a loop below for archive.org uploads, to retry more aggressively
 
 # Keys (inside buckets) are in the format YOUTUBE_ID.FORMAT
 # e.g. DK1lCc9b7bg.mp4/ or Dpo_-GrMpNE.m3u8/
@@ -152,7 +156,14 @@ def upload_converted_to_archive(youtube_id, formats_to_upload):
                     "x-archive-meta01-subject": "Salman Khan", 
                     "x-archive-meta02-subject": "Khan Academy",
                 }
-                dest_key.set_contents_from_file(t, headers=headers, cb=send_cb)
+                for attempt in xrange(10):
+                    try:
+                        dest_key.set_contents_from_file(t, headers=headers, cb=send_cb)
+                    except e as BotoServerError:
+                        logger.error("Error {0} {1} during upload attempt {2} to archive.org.".format(e.status, e.reason, attempt))
+                    break
+                else:
+                    raise Exception("Gave up publish attempt due to server errors")
                 pbar.finish()
                 
                 uploaded_filenames.append(destination_name)
