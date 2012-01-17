@@ -63,9 +63,9 @@ class YouTubeExporter(object):
 
     # Publish, to archive.org, all videos that have been converted to downloadable format
     @staticmethod
-    def publish_converted_videos(max_videos, dryrun=False):
+    def publish_converted_videos(max_videos, dryrun=False, use_archive=True):
 
-        logger.info("Searching for downloadable content that needs to be published to archive.org")
+        logger.info("Searching for downloadable content that needs to be published")
 
         publish_attempts = 0
         converted_videos = s3.list_converted_videos()
@@ -86,26 +86,30 @@ class YouTubeExporter(object):
                 continue
 
             if dryrun:
-                logger.info("Skipping upload to archive.org for video {0} formats {1} due to dryrun".format(youtube_id, ", ".join(converted_missing_formats)))
+                logger.info("Skipping publish for video {0} formats {1} due to dryrun".format(youtube_id, ", ".join(converted_missing_formats)))
             else:
-                if s3.upload_converted_to_archive(youtube_id, converted_missing_formats):
-                    logger.info("Successfully uploaded to archive.org")
-
-                    current_format_downloads = (api.video_metadata(youtube_id)["download_urls"] or {})
-                    current_formats = set(current_format_downloads.keys())
-                    new_formats = current_formats | converted_missing_formats
-                    if "mp4" in new_formats:
-                        # PNG thumbnails are generated as part of the MP4 conversion process.
-                        # If mp4 has been uploaded to archive.org, png is guaranteed to be there as well.
-                        new_formats.add("png")
-                    if api.update_download_available(youtube_id, new_formats):
-                        logger.info("Updated KA download_available, set to {0} for video {1}".format(", ".join(new_formats), youtube_id))
+                if use_archive:
+                    if s3.upload_converted_to_archive(youtube_id, converted_missing_formats):
+                        logger.info("Successfully uploaded to archive.org")
                     else:
-                        logger.error("Unable to update KA download_available to {0} for youtube id {1}".format(", ".join(new_formats), youtube_id))
-
-                    publish_attempts += 1
+                        logger.error("Unable to upload video {0} to archive.org".format(youtube_id))
+                        continue
                 else:
-                    logger.error("Unable to upload video {0} to archive.org".format(youtube_id))
+                    logger.info("Skipping upload to archive.org; assuming API points directly to S3 instead.")
+
+                current_format_downloads = (api.video_metadata(youtube_id)["download_urls"] or {})
+                current_formats = set(current_format_downloads.keys())
+                new_formats = current_formats | converted_missing_formats
+                if "mp4" in new_formats:
+                    # PNG thumbnails are generated as part of the MP4 conversion process.
+                    # If mp4 has been uploaded to archive.org, png is guaranteed to be there as well.
+                    new_formats.add("png")
+                if api.update_download_available(youtube_id, new_formats):
+                    logger.info("Updated KA download_available, set to {0} for video {1}".format(", ".join(new_formats), youtube_id))
+                else:
+                    logger.error("Unable to update KA download_available to {0} for youtube id {1}".format(", ".join(new_formats), youtube_id))
+
+                publish_attempts += 1
 
 
 def setup_logging(options):
@@ -145,6 +149,10 @@ def main():
         action="store_true", dest="dryrun",
         help="Don't start new zencoder jobs or upload to archive.org", default=False)
 
+    parser.add_option("--no-archive",
+        action="store_false", dest="use_archive", default=True, 
+        help="Assume the server uses S3 URLs instead of archive.org URLs. Don't upload to archive.org, and mark as published via API as soon as videos are converted and stored on S3.")
+
     options, args = parser.parse_args()
 
     setup_logging(options)
@@ -154,7 +162,7 @@ def main():
         if options.step == "convert":
             YouTubeExporter.convert_missing_downloads(options.max, options.dryrun)
         elif options.step == "publish":
-            YouTubeExporter.publish_converted_videos(options.max, options.dryrun)
+            YouTubeExporter.publish_converted_videos(options.max, options.dryrun, options.use_archive)
         else:
             print "Unknown export step."
 
