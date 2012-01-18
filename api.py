@@ -4,7 +4,7 @@ import simplejson
 
 from oauth import OAuthConsumer, OAuthToken, OAuthRequest, OAuthSignatureMethod_HMAC_SHA1
 from secrets import ka_consumer_key, ka_consumer_secret, ka_access_token, ka_access_token_secret
-from util import logger
+from util import logger, DOWNLOADABLE_FORMATS
 
 _library = None
 def get_library():
@@ -17,8 +17,8 @@ def get_library():
             fresh.close()
     return _library
 
-def list_missing_video_content(downloadable_formats):
-    """Returns a dictionary mapping youtube IDs to formats missing from the API, relative to the downloadable_formats parameter"""
+def list_missing_video_content():
+    """Returns a dictionary mapping youtube IDs to formats missing from the API"""
 
     missing_content = {}
 
@@ -27,7 +27,7 @@ def list_missing_video_content(downloadable_formats):
             download_urls = video["download_urls"]
             if download_urls is None:
                 download_urls = {}
-            missing_formats = downloadable_formats - set(download_urls.keys())
+            missing_formats = DOWNLOADABLE_FORMATS - set(download_urls.keys())
             if len(missing_formats) > 0:
                 missing_content[video["youtube_id"]] = missing_formats
 

@@ -21,7 +21,7 @@ from secrets import (
     archive_access_key, 
     archive_secret_key
 )
-from util import logger
+from util import logger, DOWNLOADABLE_FORMATS
 
 # We use bucket names with uppercase characters, so we must use OrdinaryCallingFormat
 # instead of the default SubdomainCallingFormat
@@ -41,7 +41,7 @@ archive_connection = S3Connection(archive_access_key, archive_secret_key, host="
 re_video_key_name = re.compile(r"([\w-]+)\.(\w+)/")
 
 # Older keys are of the form YOUTUBE_ID
-re_legacy_video_key_name = re.compile(r"[\w-]+")
+re_legacy_video_key_name = re.compile(r"([\w-]+)/(.*)$")
 
 def get_or_create_unconverted_source_url(youtube_id):
     matching_keys = list(unconverted_bucket.list(youtube_id))
@@ -73,7 +73,7 @@ def get_or_create_unconverted_source_url(youtube_id):
 
     return "s3://{0}/{1}".format(unconverted_bucket.name, matching_key.name)
 
-def list_converted_videos():
+def list_converted_formats():
     """Returns a dict that maps youtube_ids (keys) to a set of available converted formats (values)"""
     converted_videos = defaultdict(set)
     legacy_video_keys = set()
@@ -88,6 +88,34 @@ def list_converted_videos():
             converted_videos[video_match.group(1)].add(video_match.group(2))
     logger.info("{0} legacy converted videos were ignored".format(len(legacy_video_keys)))
     return converted_videos
+
+def list_legacy_mp4_videos():
+    """Returns a set with youtube ids of videos that have legacy mp4/png converted content saved on S3. You can pass these ids to copy_legacy_content_to_new_location."""
+    legacy_mp4_videos = set()
+    for key in converted_bucket.list(delimiter="/"):
+        legacy_match = re_legacy_video_key_name.match(key.name)
+        if legacy_match is not None:
+            legacy_mp4_videos.add(legacy_match.group(1))
+    return legacy_mp4_videos
+
+def copy_legacy_content_to_new_location(youtube_id):
+    """Copies the MP4 & PNG files from a legacy-format video in the S3 converted bucket to the new naming scheme."""
+    for key in converted_bucket.list(prefix="{0}/".format(youtube_id)):
+        legacy_match = re_legacy_video_key_name.match(key.name)
+        assert legacy_match is not None
+        assert legacy_match.group(1) == youtube_id
+        dest_key = "{0}.mp4/{1}".format(youtube_id, legacy_match.group(2))
+        logger.info("Copying {0} to {1}".format(key.name, dest_key))
+        key.copy(converted_bucket.name, dest_key, preserve_acl=True)
+
+def list_missing_converted_formats():
+    """Returns a dict that maps youtube_ids (keys) to a set of formats missing from the converted bucket (values)"""
+    missing_converted_formats = {}
+    converted_formats = list_converted_formats()
+    for playlist in api.get_library():
+        for video in playlist["videos"]:
+            missing_converted_formats[video["youtube_id"]] = DOWNLOADABLE_FORMATS - converted_formats[video["youtube_id"]]
+    return missing_converted_formats
 
 def upload_converted_to_archive(youtube_id, formats_to_upload):
     # The bucket may not exist yet on archive.org. Unfortunately create_bucket
