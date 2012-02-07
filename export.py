@@ -9,6 +9,7 @@ import s3
 import zencode
 import filelock
 from util import logger
+from operator import itemgetter
 
 class YouTubeExporter(object):
     """ Convert our YouTube videos into downloadable formats.
@@ -48,6 +49,10 @@ class YouTubeExporter(object):
                 logger.info("Stopping: max videos reached")
                 break
 
+            if "_DUP_" in youtube_id:
+                logger.info("Skipping video {0} as it has invalid DUP in youtube ID".format(youtube_id))
+                continue
+
             if missing_on_s3:
                 # We already know the formats are missing from S3.
                 formats_to_create = missing_formats
@@ -70,12 +75,12 @@ class YouTubeExporter(object):
 
             logger.info("Starting conversion of %s into formats %s" % (youtube_id, ",".join(formats_to_create)))
 
-            s3_source_url = s3.get_or_create_unconverted_source_url(youtube_id)
-            assert(s3_source_url)
-
             if dryrun:
-                logger.info("Skipping sending job to zencoder due to dryrun")
+                logger.info("Skipping downloading and sending job to zencoder due to dryrun")
             else:
+                s3_source_url = s3.get_or_create_unconverted_source_url(youtube_id)
+                assert(s3_source_url)
+                
                 zencode.start_converting(youtube_id, s3_source_url, formats_to_create)
 
             videos_converted += 1

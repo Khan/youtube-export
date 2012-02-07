@@ -24,6 +24,8 @@ def list_missing_video_content():
 
     for playlist in get_library():
         for video in playlist["videos"]:
+            if video["kind"] != "Video":
+                continue
             download_urls = video["download_urls"]
             if download_urls is None:
                 download_urls = {}
@@ -37,6 +39,7 @@ def video_metadata(youtube_id):
     """Returns metadata dict (title, description, etc.) for a given youtube_id."""
     for playlist in get_library():
         for video in playlist["videos"]:
+            if video["kind"] != "Video": continue
             if video["youtube_id"] == youtube_id:
                 return video
 

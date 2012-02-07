@@ -90,37 +90,21 @@ def output_m3u8_playlist(youtube_id, thumbnail_time):
 
 def output_m3u8_low(youtube_id, thumbnail_time):
     return {
-		"video_codec": "h264",
-		"public": 1,
-		"audio_channels": 1,
-		"audio_sample_rate": 44100,
-        "audio_bitrate": 24,
-        "audio_lowpass": 16000,
+        "public": 1,
+        "audio_channels": 1,
+        "audio_quality": 3,
         "audio_normalize": True,
-		"width": 440,
-        "quality": 3,
-        "bitrate_cap": 36,
-        "buffer_size": 144,
-		"video_bitrate": 30,
-		"type": "segmented",
+        "skip_video": True,
+        "type": "segmented",
         "base_url": BASE_URL,
         "filename": "%s.m3u8/%s-low.m3u8" % (youtube_id, youtube_id),
-        "watermarks": [
-            {
-                "width": 64,
-                "height": 8,
-                "x": -2,
-                "y": -2,
-                "url": "http://www.khanacademy.org/images/watermark.png",
-            }
-        ]
     }
 
 def output_m3u8_medium(youtube_id, thumbnail_time):
     return {
 		"video_codec": "h264",
 		"public": 1,
-        "audio_bitrate": 48,
+        "audio_quality": 3,
         "audio_normalize": True,
         "quality": 4,
         "bitrate_cap": 120,
@@ -144,7 +128,7 @@ def output_m3u8_high(youtube_id, thumbnail_time):
     return {
 		"video_codec": "h264",
 		"public": 1,
-        "audio_bitrate": 48,
+        "audio_quality": 3,
         "audio_normalize": True,
         "quality": 4,
 		"type": "segmented",

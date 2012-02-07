@@ -114,6 +114,7 @@ def list_missing_converted_formats():
     converted_formats = list_converted_formats()
     for playlist in api.get_library():
         for video in playlist["videos"]:
+            if "youtube_id" not in video: continue # Non-YouTube video
             missing_converted_formats[video["youtube_id"]] = DOWNLOADABLE_FORMATS - converted_formats[video["youtube_id"]]
     return missing_converted_formats
 
