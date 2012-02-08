@@ -17,31 +17,33 @@ def get_library():
             fresh.close()
     return _library
 
+def list_videos():
+    for playlist in get_library():
+        for video in playlist["videos"]:
+            if video["kind"] != "Video":
+                continue
+            yield video
+
 def list_missing_video_content():
     """Returns a dictionary mapping youtube IDs to formats missing from the API"""
 
     missing_content = {}
 
-    for playlist in get_library():
-        for video in playlist["videos"]:
-            if video["kind"] != "Video":
-                continue
-            download_urls = video["download_urls"]
-            if download_urls is None:
-                download_urls = {}
-            missing_formats = DOWNLOADABLE_FORMATS - set(download_urls.keys())
-            if len(missing_formats) > 0:
-                missing_content[video["youtube_id"]] = missing_formats
+    for video in list_videos():
+        download_urls = video["download_urls"]
+        if download_urls is None:
+            download_urls = {}
+        missing_formats = DOWNLOADABLE_FORMATS - set(download_urls.keys())
+        if len(missing_formats) > 0:
+            missing_content[video["youtube_id"]] = missing_formats
 
     return missing_content
 
 def video_metadata(youtube_id):
     """Returns metadata dict (title, description, etc.) for a given youtube_id."""
-    for playlist in get_library():
-        for video in playlist["videos"]:
-            if video["kind"] != "Video": continue
-            if video["youtube_id"] == youtube_id:
-                return video
+    for video in list_videos():
+        if video["youtube_id"] == youtube_id:
+            return video
 
 def update_download_available(youtube_id, available_formats):
 
