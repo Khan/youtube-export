@@ -1,0 +1,2 @@
+progressbar==2.2
+boto==2.2.2
