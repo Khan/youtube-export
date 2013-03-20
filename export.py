@@ -8,6 +8,8 @@ import s3
 import zencode
 import filelock
 from util import logger
+from languagechannels import utils as lang_utils
+from util import DOWNLOADABLE_FORMATS
 
 
 class YouTubeExporter(object):
@@ -21,13 +23,14 @@ class YouTubeExporter(object):
     """
 
     @staticmethod
-    def convert_missing_downloads(max_videos, dryrun=False,
-                                  missing_on_s3=False):
+    def convert_missing_downloads(max_videos, dryrun=False, 
+        missing_on_s3=False, language_channels=None):
         """Download from YouTube and use Zencoder to start converting any
         missing downloadable content into its appropriate downloadable format.
         """
 
         videos_converted = 0
+        converted_formats = None
 
         if missing_on_s3:
             # With this option, videos that are missing in the S3 converted
@@ -44,6 +47,17 @@ class YouTubeExporter(object):
                 "Searching for videos that are missing from API download_urls")
             formats_to_convert = api.list_missing_video_content()
             converted_formats = s3.list_converted_formats()
+
+        if language_channels:
+            if language_channels[0] == 'all':
+                channel_ids_set = lang_utils.video_ids_set()
+            else:
+                channel_ids_set = lang_utils.video_ids_set(languagechannels)
+            # Use converted_formats if already downloaded above, otherwise get it now
+            converted_formats = converted_formats or s3.list_converted_formats()
+            for vid_id in channel_ids_set:
+                if vid_id not in converted_formats:
+                    formats_to_convert[vid_id] = DOWNLOADABLE_FORMATS
 
         for youtube_id, missing_formats in formats_to_convert.iteritems():
             if videos_converted >= max_videos:
@@ -226,6 +240,11 @@ def main():
         help="Convert any videos that are missing on S3 (as opposed to "
         "missing in the API download_urls)")
 
+    parser.add_option("-l", "--language-channel",
+        action="append", dest="language_channels", default=None,
+        help="Check specified language channel(s) for dubbed videos to convert"
+        "For all: '-l all'")
+
     options, args = parser.parse_args()
 
     setup_logging(options)
@@ -234,7 +253,8 @@ def main():
     with filelock.FileLock("export.lock", timeout=2):
         if options.step == "convert":
             YouTubeExporter.convert_missing_downloads(
-                options.max, options.dryrun, options.missing_on_s3)
+                options.max, options.dryrun, options.missing_on_s3, 
+                options.language_channels)
         elif options.step == "publish":
             YouTubeExporter.publish_converted_videos(
                 options.max, options.dryrun, options.use_archive)
