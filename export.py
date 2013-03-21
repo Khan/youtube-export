@@ -52,7 +52,7 @@ class YouTubeExporter(object):
             if language_channels[0] == 'all':
                 channel_ids_set = lang_utils.video_ids_set()
             else:
-                channel_ids_set = lang_utils.video_ids_set(languagechannels)
+                channel_ids_set = lang_utils.video_ids_set(language_channels)
             # Use converted_formats if already downloaded above, otherwise get it now
             converted_formats = converted_formats or s3.list_converted_formats()
             for vid_id in channel_ids_set:

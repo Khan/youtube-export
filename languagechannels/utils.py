@@ -1,6 +1,3 @@
-"""
-This script returns 
-"""
 import optparse
 import logging
 import urllib2	
@@ -9,6 +6,8 @@ import json
 import pdb
 import csv
 import time 
+from known_channels import known_language_channels
+import os 
 
 def update_all_language_channels_json():
 	"""
@@ -16,8 +15,7 @@ def update_all_language_channels_json():
 	new JSON files for each major YouTube API request. 
 	"""
 	logging.info("Updating all language channels:")
-	channel_dictionary = language_channels_dictionary()
-	for channel_id, language_code in channel_dictionary.iteritems():
+	for channel_id, language_code in known_language_channels.iteritems():
 		update_language_channel_json(channel_id)
 
 
@@ -38,8 +36,8 @@ def update_language_channel_json(channel_id):
 		"playlist_videos": playlist_videos_json
 	}
 
-	logging.info("Writing data to 'youtube_data/%s.json'." % channel_id)
-	with open('youtube_data/%s.json' % channel_id, 'wb') as fp:
+	logging.info("Writing data to 'languagechannels/youtube_data/%s.json'." % channel_id)
+	with open(os.path.dirname(os.path.realpath(__file__)) + '/youtube_data/%s.json'  % channel_id, 'wb') as fp:
 		json.dump(full_channel_json, fp)
 
 
@@ -145,7 +143,7 @@ def video_ids_set(channel_ids=None):
 				video_ids.update(extract_ids(channel_id))
 	else:
 		logging.info("Returning set of all language channel video IDs")
-		channel_list = language_channels_dictionary().keys()
+		channel_list = known_language_channels.keys()
 		for channel_id in channel_list:
 			video_ids.update(extract_ids(channel_id))
 	return video_ids
@@ -157,7 +155,7 @@ def extract_ids(channel_id):
 	playlists of the channel
 	"""
 	video_ids = set()
-	data = json.load(open('youtube_data/%s.json' % channel_id))
+	data = json.load(open(os.path.dirname(os.path.realpath(__file__)) + '/youtube_data/%s.json' % channel_id))
 	# Extract uploaded video IDs 
 	for entry in data["video_uploads"]:
 		video_ids.add(entry["id"]["$t"].replace("http://gdata.youtube.com/feeds/api/videos/", ""))
@@ -168,19 +166,12 @@ def extract_ids(channel_id):
 	return video_ids
 
 
-def language_channels_dictionary():
-	"""
-	Returns a reference dictionary mapping all Khan Academy Language 
-	Channel IDs to their language code.
-	"""
-	return json.load(open('known_channels.json'))
-
 def ensure_existence(channel_id):
 	"""
 	Ensures that the language channel ID given exists inside the language 
 	channel dictionary. 
 	"""
-	if not language_channels_dictionary().get(channel_id):
+	if not known_language_channels.get(channel_id):
 		return logging.error("'%s' is not a language channel. Check for misspellings and try again! :)" % channel_id)
 	return True
 

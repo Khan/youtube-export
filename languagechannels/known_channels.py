@@ -1,4 +1,4 @@
-{
+known_language_channels = {
 		"KhanAcademyAfrikaans": "af",
 		"KhanAcademyAlbanian": "sq",
 		"KhanAcademyArabi": "ar",
