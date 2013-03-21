@@ -2,7 +2,7 @@ Module that indexes Khan Language Channels.
 
 In the directory:
 
-known_channels.json:
+known_channels.py:
 	A dictionary mapping known language channels to their language codes.
 	It should be modified if new language channels are added. 
 
