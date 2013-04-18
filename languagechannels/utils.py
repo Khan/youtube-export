@@ -1,7 +1,6 @@
 import optparse
 import logging
-import urllib2  
-from urllib2 import Request, urlopen, URLError, HTTPError
+import urllib2 
 import json 
 import pdb
 import csv
