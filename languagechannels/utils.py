@@ -10,9 +10,8 @@ from known_channels import known_language_channels
 import os 
 
 def update_all_language_channels_json():
-    """
-    References a built in YouTube KA Language Channel Dictionary to write
-    new JSON files for each major YouTube API request. 
+    """Write a new JSON file for each language in the built-in KA language  
+    channel dictionary.
     """
     logging.info("Updating all language channels:")
     for channel_id, language_code in known_language_channels.iteritems():
@@ -20,10 +19,7 @@ def update_all_language_channels_json():
 
 
 def update_language_channel_json(channel_id):
-    """
-    Takes a YouTube Channel ID and rewrites the related JSON files 
-    according to API responses.
-    """
+    """Write a new JSON file for specified channel."""
     uploads_json = channel_uploads(channel_id)
     playlists_json, playlist_ids_list = playlist_ids(channel_id)
     playlist_videos_json = {}
@@ -42,9 +38,8 @@ def update_language_channel_json(channel_id):
 
 
 def channel_uploads(channel_id):
-    """
-    Returns the combined JSON YouTube API response of all the 
-    channels uploaded videos.
+    """Return the combined JSON response of all the channel's 
+    uploaded videos.
     """
     logging.info("Getting all uploads for %s" % channel_id)
     video_entries = []
@@ -67,10 +62,7 @@ def channel_uploads(channel_id):
 
 
 def playlist_ids(channel_id):
-    """
-    Returns the combined JSON YouTube API response of all the 
-    playlists affiliated with the channel.
-    """
+    """Return the combined JSON response of all the channel's playlists."""
     logging.info("Getting all playlists for %s" % channel_id)
     playlist_ids = []
     url = "https://gdata.youtube.com/feeds/api/users/%s/playlists?v=2&alt=json&max-results=50" % channel_id
@@ -90,7 +82,7 @@ def playlist_ids(channel_id):
 
 
 def playlist_videos(playlist_id):
-    """Returns the combined JSON YouTube API response of all the videos in the playlist."""
+    """Return the combined JSON response of all the videos in the playlist."""
     logging.info("Getting all videos for playlist: %s" % playlist_id)
     playlist_entries = []
     start_index = 1
@@ -112,10 +104,7 @@ def playlist_videos(playlist_id):
 
 
 def make_request(url):
-    """
-    Makes an API request and handles errors, retrying up to 5 times if 
-    there is an error.
-    """
+    """Make an API request and handle errors, retry up to 5 times."""
     for n in range(5):
         time.sleep(1)
         try:
@@ -131,9 +120,8 @@ def make_request(url):
 
 
 def video_ids_set(channel_ids=None):
-    """
-    Returns a set of all video IDs in the specified language channels. 
-    Returns all video IDs if left empty.
+    """Return a set of all video IDs in the specified language channels. 
+    Return all video IDs if left empty.
     """
     video_ids = set()       
     if channel_ids:
@@ -150,9 +138,8 @@ def video_ids_set(channel_ids=None):
 
 
 def extract_ids(channel_id):
-    """
-    Returns a set of video IDs that have been uploaded or included in 
-    playlists of the channel
+    """Return a set of video IDs that have been uploaded or included in 
+    playlists of the channel.
     """
     video_ids = set()
     data = json.load(open(os.path.dirname(os.path.realpath(__file__)) + '/youtube_data/%s.json' % channel_id))
@@ -167,8 +154,7 @@ def extract_ids(channel_id):
 
 
 def ensure_existence(channel_id):
-    """
-    Ensures that the language channel ID given exists inside the language 
+    """Ensure that the language channel ID given exists inside the language 
     channel dictionary. 
     """
     if not known_language_channels.get(channel_id):
@@ -177,13 +163,11 @@ def ensure_existence(channel_id):
 
 
 def setup_logging():
-    """Sets log messages to display in the console"""
     logging.basicConfig(level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
 def main():
-    """Handles command line args directs the script"""
     parser = optparse.OptionParser()
 
     parser.add_option("-U", "--update", action="store_true", dest="update", 
