@@ -74,8 +74,7 @@ def playlist_ids(channel_id):
             return {}, []
         else: 
             for playlist_id in entry:
-                begin = playlist_id["id"]["$t"].rfind(":") + 1
-                playlist_ids.append(playlist_id["id"]["$t"][begin:])
+                playlist_ids.append(playlist_id["yt$playlistId"]["$t"])
             return playlist_ids
 
 
