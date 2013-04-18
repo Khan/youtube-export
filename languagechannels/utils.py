@@ -20,14 +20,13 @@ def update_all_language_channels_json():
 def update_language_channel_json(channel_id):
     """Write a new JSON file for specified channel."""
     uploads_json = channel_uploads(channel_id)
-    playlists_json, playlist_ids_list = playlist_ids(channel_id)
+    playlist_ids_list = playlist_ids(channel_id)
     playlist_videos_json = {}
     for pl_id in playlist_ids_list:
         playlist_videos_json[pl_id] = playlist_videos(pl_id)
 
     full_channel_json = {
         "video_uploads": uploads_json,
-        "playlists": playlists_json,
         "playlist_videos": playlist_videos_json
     }
 
@@ -77,7 +76,7 @@ def playlist_ids(channel_id):
             for playlist_id in entry:
                 begin = playlist_id["id"]["$t"].rfind(":") + 1
                 playlist_ids.append(playlist_id["id"]["$t"][begin:])
-            return entry, playlist_ids
+            return playlist_ids
 
 
 def playlist_videos(playlist_id):
