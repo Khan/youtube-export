@@ -24,7 +24,6 @@ def update_language_channel_json(channel_id):
     playlist_videos_json = {}
     for pl_id in playlist_ids_list:
         playlist_videos_json[pl_id] = playlist_videos(pl_id)
-
     full_channel_json = {
         "video_uploads": uploads_json,
         "playlist_videos": playlist_videos_json
@@ -50,8 +49,9 @@ def channel_uploads(channel_id):
     more_videos = True
     while more_videos:
         url = "https://gdata.youtube.com/feeds/api/users/%s/uploads?alt=json&max-results=50&start-index=%d" % (channel_id, start_index)
-        response = make_request(url)
-        if response.get("error"):
+        try: 
+            response = make_request(url)
+        except Exception, e:
             logging.info("Setting more_videos to false to continue execution.")
             more_videos = False
         else: 
@@ -69,14 +69,14 @@ def playlist_ids(channel_id):
     logging.info("Getting all playlists for %s" % channel_id)
     playlist_ids = []
     url = "https://gdata.youtube.com/feeds/api/users/%s/playlists?v=2&alt=json&max-results=50" % channel_id
-    response = make_request(url)
-    if response.get("error"):
-        logging.info("Returning empty dictionary & list, continuing execution.")
-        return {}, []
+    try:
+        response = make_request(url)
+    except Exception, e: 
+        return playlist_ids
     else:
         entry = response.get("feed").get("entry")
         if entry == None:
-            return {}, []
+            return playlist_ids
         else: 
             for playlist_id in entry:
                 playlist_ids.append(playlist_id["yt$playlistId"]["$t"])
@@ -91,8 +91,9 @@ def playlist_videos(playlist_id):
     more_videos = True
     while more_videos:
         url = "http://gdata.youtube.com/feeds/api/playlists/%s?v=2&alt=json&max-results=50&start-index=%d" % (playlist_id, start_index) 
-        response = make_request(url)
-        if response.get("error"):
+        try:
+            response = make_request(url)
+        except Exception, e:
             logging.info("Setting more_videos to false to continue execution.")
             more_videos = False
         else: 
@@ -115,26 +116,29 @@ def make_request(url):
         except Exception, e:
             logging.error("Error during request. Trying again %d/5 times." % (n+1))
             logging.debug("Error: %s.\nURL: %s" % (e, url))
-            response = { "error": e }
+            if n == 5:
+                raise Exception("Error during request.")
         else:
-            break
-    return response
+            return response
 
 
 def video_ids_set(channel_ids=None):
     """Return a set of all video IDs in the specified language channels. 
     Return all video IDs if left empty.
     """
-    video_ids = set()       
     if channel_ids:
-        logging.info("Set of video IDs for %s" % ", ".join(channel_ids))
-        for channel_id in channel_ids:
-            if ensure_existence(channel_id):
-                video_ids.update(extract_ids(channel_id))
-    else:
+        logging.info("Returning set of video IDs for %s" % ", ".join(channel_ids))
+    else: 
         logging.info("Returning set of all language channel video IDs")
-        channel_list = known_language_channels.keys()
-        for channel_id in channel_list:
+        channel_ids = known_language_channels.keys()
+
+    video_ids = set()       
+    for channel_id in channel_ids:
+        try: 
+            ensure_existence(channel_id)
+        except Exception, e:
+            logging.error("'%s' is not a language channel. Check for misspellings and try again! :)" % channel_id)
+        else:
             video_ids.update(extract_ids(channel_id))
     return video_ids
 
@@ -147,7 +151,9 @@ def extract_ids(channel_id):
     data = json.load(open(os.path.dirname(os.path.realpath(__file__)) + '/youtube_data/%s.json' % channel_id))
     # Extract uploaded video IDs 
     for entry in data["video_uploads"]:
-        video_ids.add(entry["id"]["$t"].replace("http://gdata.youtube.com/feeds/api/videos/", ""))
+        video_id = entry["id"]["$t"].replace("http://gdata.youtube.com/feeds/api/videos/", "")
+        assert len(video_id) == 11
+        video_ids.add(video_id)
     # Extract playlist video IDs
     for playlist_id in data["playlist_videos"]:
         for video in data["playlist_videos"][playlist_id]:
@@ -159,9 +165,8 @@ def ensure_existence(channel_id):
     """Ensure that the language channel ID given exists inside the language 
     channel dictionary. 
     """
-    if not known_language_channels.get(channel_id):
-        return logging.error("'%s' is not a language channel. Check for misspellings and try again! :)" % channel_id)
-    return True
+    if channel_id not in known_language_channels:
+        raise Exception("'%s' is not a language channel. Check for misspellings and try again! :)" % channel_id)
 
 
 def setup_logging():
