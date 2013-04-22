@@ -29,9 +29,14 @@ def update_language_channel_json(channel_id):
         "video_uploads": uploads_json,
         "playlist_videos": playlist_videos_json
     }
-
-    logging.info("Writing data to 'languagechannels/youtube_data/%s.json'." % channel_id)
-    with open(os.path.dirname(os.path.realpath(__file__)) + '/youtube_data/%s.json'  % channel_id, 'wb') as fp:
+    directory = os.path.dirname(os.path.abspath(__file__)) + '/youtube_data/'
+    filename = '%s.json' % channel_id
+    full_file_path = directory + filename
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        logging.info("Created directory %s." % directory)
+    logging.info("Writing data to %s." % full_file_path)
+    with open(full_file_path, 'wb') as fp:
         json.dump(full_channel_json, fp)
 
 
@@ -88,7 +93,7 @@ def playlist_videos(playlist_id):
         url = "http://gdata.youtube.com/feeds/api/playlists/%s?v=2&alt=json&max-results=50&start-index=%d" % (playlist_id, start_index) 
         response = make_request(url)
         if response.get("error"):
-            loggin.info("Setting more_videos to false to continue execution.")
+            logging.info("Setting more_videos to false to continue execution.")
             more_videos = False
         else: 
             entry = response.get("feed").get("entry")
