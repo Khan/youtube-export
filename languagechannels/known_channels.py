@@ -53,4 +53,4 @@ known_language_channels = {
     "KhanAcademyUkrainian": "uk",
     "KhanAcademyUrdu": "ur",
     "KhanAcademyXhosa": "xh"
-} 
+}
