@@ -2,4 +2,4 @@
 
 cd /home/ec2-user/youtube-export
 
-python export.py --step=convert --max=25
+python export.py --max=25

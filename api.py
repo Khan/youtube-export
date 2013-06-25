@@ -1,65 +1,25 @@
-import urllib
 import urllib2
 import simplejson
 
-import secrets
-from util import logger, DOWNLOADABLE_FORMATS
-
-_library = None
+_id_list = None
 
 
-def get_library():
-    global _library
-    if _library is None:
-        fresh = urllib2.urlopen("http://www.khanacademy.org/api/v1/playlists/library/list/fresh")
+def get_youtube_ids():
+    """Retrieve all the YouTube IDs (including translations) from KA.org.
+    
+    This will fetch all the publicly-visible YouTube IDs on the site in all
+    languages and return them as a big, flat list.
+    """
+    global _id_list
+    if _id_list is None:
+        all_videos_in = urllib2.urlopen("http://www.khanacademy.org/api/v1/videos/localized/all")
         try:
-            _library = simplejson.load(fresh)
+            all_videos = simplejson.load(all_videos_in)
         finally:
-            fresh.close()
-    return _library
+            all_videos_in.close()
 
+    _id_list = []
+    for v in all_videos:
+        _id_list += v["youtube_ids"].values()
+    return _id_list
 
-def list_videos():
-    for playlist in get_library():
-        for video in playlist["videos"]:
-            if video["kind"] != "Video":
-                continue
-            yield video
-
-
-def list_missing_video_content():
-    """Return a dict mapping youtube IDs to formats missing from the API."""
-
-    missing_content = {}
-
-    for video in list_videos():
-        download_urls = video["download_urls"]
-        if download_urls is None:
-            download_urls = {}
-        missing_formats = DOWNLOADABLE_FORMATS - set(download_urls.keys())
-        if len(missing_formats) > 0:
-            missing_content[video["youtube_id"]] = missing_formats
-
-    return missing_content
-
-
-def video_metadata(youtube_id):
-    """Returns metadata dict (title, description, etc.) for a given
-    youtube_id."""
-    for video in list_videos():
-        if video["youtube_id"] == youtube_id:
-            return video
-
-
-def update_download_available(youtube_id, available_formats):
-
-    url = "http://www.khanacademy.org/api/v1/videos/%s/download_available" % youtube_id
-    params = {
-        'formats': ','.join(available_formats),
-        'key': secrets.ka_download_available_secret,
-    }
-
-    response = urllib2.urlopen(url, data=urllib.urlencode(params))
-    logger.info(response.read())
-
-    return response.code == 200
