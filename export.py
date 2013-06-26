@@ -87,7 +87,7 @@ def setup_logging(options):
         strftime = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
         handler = logging.FileHandler(
-            'logs/%s_%s.log' % (options.step, strftime), mode="w")
+            'logs/convert_%s.log' % strftime, mode="w")
 
     handler.setFormatter(formatter)
     logger.setLevel(logging.DEBUG)
