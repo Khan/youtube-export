@@ -30,9 +30,14 @@ re_legacy_video_key_name = re.compile(r"([\w-]+)/(.*)$")
 
 def get_or_create_unconverted_source_url(youtube_id):
     matching_keys = list(unconverted_bucket.list(youtube_id))
+
+    # TODO(alpert): How do these .part files get created? They're not real
+    # video files and should be ignored.
+    matching_keys = [key for key in matching_keys if not key.endswith('.part')]
+
     matching_key = None
 
-    if len(matching_keys) > 0:
+    if matching_keys:
         if len(matching_keys) > 1:
             logger.warning("More than 1 matching unconverted video "
                            "URL found for video {0}".format(youtube_id))
