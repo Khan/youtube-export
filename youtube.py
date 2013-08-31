@@ -47,6 +47,8 @@ def download(youtube_id):
     logger.info(results)
 
     files = os.listdir(temp_dir)
+    if not files:
+        return
     assert len(files) == 1
     video_path = os.path.join(temp_dir, files[0])
     logger.info(video_path)

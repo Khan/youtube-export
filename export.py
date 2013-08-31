@@ -67,7 +67,9 @@ class YouTubeExporter(object):
             else:
                 s3_source_url = s3.get_or_create_unconverted_source_url(
                     youtube_id)
-                assert(s3_source_url)
+                if not s3_source_url:
+                    logger.warning("No S3 source URL created; skipping")
+                    continue
 
                 zencode.start_converting(
                     youtube_id, s3_source_url, formats_to_create)

@@ -42,9 +42,10 @@ def get_or_create_unconverted_source_url(youtube_id):
                     "downloading from youtube to create it.")
 
         video_path = youtube.download(youtube_id)
+        if not video_path:
+            logger.warning("Error downloading video {0}".format(youtube_id))
+            return
         logger.info("Downloaded video to {0}".format(video_path))
-
-        assert(video_path)
 
         video_extension = splitext(video_path)[1]
         assert video_extension[0] == "."
