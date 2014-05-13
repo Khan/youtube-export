@@ -33,8 +33,9 @@ def get_or_create_unconverted_source_url(youtube_id):
 
     # TODO(alpert): How do these .part files get created? They're not real
     # video files and should be ignored.
-    matching_keys = [key for key in matching_keys if not key.endswith('.part')]
-
+    matching_keys = [key for key in matching_keys
+                     if not key.name.endswith('.part')]
+                     
     matching_key = None
 
     if matching_keys:
