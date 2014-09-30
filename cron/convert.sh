@@ -1,5 +1,5 @@
 #!/bin/sh
 
-cd /home/ec2-user/youtube-export
+cd $HOME/youtube-export
 
 python export.py --max=250
