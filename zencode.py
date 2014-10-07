@@ -1,9 +1,10 @@
 import logging
 import youtube
 
-from secrets import zencoder_api_key
 from zencoder import Zencoder
 from util import logger
+
+zencoder_api_key = open(expanduser('~/zencoder_api_key')).read().strip()
 
 BASE_URL = "https://s3.amazonaws.com/KA-youtube-converted/"
 
