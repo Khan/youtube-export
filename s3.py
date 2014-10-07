@@ -2,15 +2,14 @@ import os
 import re
 import api
 import youtube
-from os.path import splitext
+from os.path import splitext, expanduser
 from collections import defaultdict
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 from boto.s3.key import Key
-from secrets import (
-    s3_access_key, 
-    s3_secret_key, 
-)
 from util import logger, DOWNLOADABLE_FORMATS
+
+s3_access_key = open(expanduser('~/s3_access_key')).read().strip()
+s3_secret_key = open(expanduser('~/s3_secret_key')).read().strip()
 
 # We use bucket names with uppercase characters, so we must use
 # OrdinaryCallingFormat instead of the default SubdomainCallingFormat
