@@ -40,8 +40,14 @@ class HTTPBackend(object):
         if resource_name:
             self.base_url = self.base_url + resource_name
 
+        # The default httplib2 cert file is pants.  See
+        #    http://stackoverflow.com/questions/13707606/httplib2-ssl-error
+        if os.path.exists("/etc/ssl/certs/ca-certificates.crt"):
+            ca_certs = "/etc/ssl/certs/ca-certificates.crt"
+        else:
+            ca_certs = None
         #TODO investigate httplib2 caching and if it is necessary
-        self.http = httplib2.Http(timeout=timeout)
+        self.http = httplib2.Http(timeout=timeout, ca_certs=ca_certs)
         self.as_xml = as_xml
         self.api_key = api_key
 
