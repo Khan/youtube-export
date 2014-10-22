@@ -12,7 +12,7 @@ def get_youtube_ids():
     """
     global _id_list
     if _id_list is None:
-        all_videos_in = urllib2.urlopen("http://www.khanacademy.org/api/v1/videos/localized/all")
+        all_videos_in = urllib2.urlopen("http://www.khanacademy.org/api/internal/videos/localized/all")
         try:
             all_videos = simplejson.load(all_videos_in)
         finally:
