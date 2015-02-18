@@ -21,7 +21,7 @@ def get_youtube_ids():
         # Now get our CS videos that are not part of the content topic tree,
         # but are part of the scratchpad tutorials
         all_talkies_in = urllib2.urlopen(
-            "https://www.khanacademy.org/api/labs/scratchpads/tutorial?verbose=false")
+            "https://www.khanacademy.org/api/internal/scratchpads/tutorial?verbose=false")
         try:
             all_talkies = simplejson.load(all_talkies_in)
         finally:
