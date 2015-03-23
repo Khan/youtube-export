@@ -76,7 +76,7 @@ class YouTubeExporter(object):
 
                 try:
                     zencode.start_converting(youtube_id, s3_source_url,
-                                             formats_to_create):
+                                             formats_to_create)
                     videos_converted += 1
                 except Exception, why:
                     logging.error('Skipping youtube_id "%s": %s'
