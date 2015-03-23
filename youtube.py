@@ -29,7 +29,8 @@ def get_thumbnail_time(youtube_id):
         if "2.jpg" in t["url"]:
             thumbnail_time = parse_time(t["time"])
             break
-    assert thumbnail_time is not None
+    if thumbnail_time is None:
+        raise ValueError("No thumbnail time found in %s" % thumbnails)
 
     return thumbnail_time
 

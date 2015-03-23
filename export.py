@@ -2,6 +2,7 @@ import datetime
 import logging
 import optparse
 import os
+import sys
 
 import s3
 import zencode
@@ -25,6 +26,7 @@ class YouTubeExporter(object):
         """
 
         videos_converted = 0
+        errors = 0
 
         # With this option, videos that are missing in the S3 converted
         # bucket are converted. The API's download_urls is ignored.
@@ -64,6 +66,7 @@ class YouTubeExporter(object):
                 logger.info(
                     "Skipping downloading and sending job to zencoder due to "
                     "dryrun")
+                videos_converted += 1
             else:
                 s3_source_url = s3.get_or_create_unconverted_source_url(
                     youtube_id)
@@ -71,10 +74,16 @@ class YouTubeExporter(object):
                     logger.warning("No S3 source URL created; skipping")
                     continue
 
-                zencode.start_converting(
-                    youtube_id, s3_source_url, formats_to_create)
+                try:
+                    zencode.start_converting(youtube_id, s3_source_url,
+                                             formats_to_create):
+                    videos_converted += 1
+                except Exception, why:
+                    logging.error('Skipping youtube_id "%s": %s'
+                                  % (youtube_id, why))
+                    errors += 1
 
-            videos_converted += 1
+        return (videos_converted, errors)
 
 
 def setup_logging(options):
@@ -118,8 +127,10 @@ def main():
 
     # Grab a lock that times out after 2 days
     with filelock.FileLock("export.lock", timeout=2):
-        YouTubeExporter.convert_missing_downloads(
+        (success, errors) = YouTubeExporter.convert_missing_downloads(
             options.max, options.dryrun)
+    return (success, errors)
 
 if __name__ == "__main__":
-    main()
+    (_, errors) = main()
+    sys.exit(errors)
