@@ -132,7 +132,7 @@ def main():
 
     if error_ids:
         logger.warning('Skipped %d youtube-ids due to errors:\n%s\n'
-                       % len(error_ids), '\n'.join(errors_ids))
+                       % (len(error_ids), '\n'.join(errors_ids)))
     return (success, len(error_ids))
 
 if __name__ == "__main__":
