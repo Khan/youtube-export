@@ -79,8 +79,8 @@ class YouTubeExporter(object):
                                              formats_to_create)
                     videos_converted += 1
                 except Exception, why:
-                    logging.error('Skipping youtube_id "%s": %s'
-                                  % (youtube_id, why))
+                    logger.error('Skipping youtube_id "%s": %s'
+                                 % (youtube_id, why))
                     errors += 1
 
         return (videos_converted, errors)
