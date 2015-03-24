@@ -26,7 +26,7 @@ class YouTubeExporter(object):
         """
 
         videos_converted = 0
-        errors = 0
+        error_ids = []
 
         # With this option, videos that are missing in the S3 converted
         # bucket are converted. The API's download_urls is ignored.
@@ -81,9 +81,9 @@ class YouTubeExporter(object):
                 except Exception, why:
                     logger.error('Skipping youtube_id "%s": %s'
                                  % (youtube_id, why))
-                    errors += 1
+                    error_ids.append(youtube_id)
 
-        return (videos_converted, errors)
+        return (videos_converted, error_ids)
 
 
 def setup_logging(options):
@@ -127,9 +127,13 @@ def main():
 
     # Grab a lock that times out after 2 days
     with filelock.FileLock("export.lock", timeout=2):
-        (success, errors) = YouTubeExporter.convert_missing_downloads(
+        (success, error_ids) = YouTubeExporter.convert_missing_downloads(
             options.max, options.dryrun)
-    return (success, errors)
+
+    if error_ids:
+        logger.warning('Skipped %d youtube-ids due to errors:\n%s\n'
+                       % len(error_ids), '\n'.join(errors_ids))
+    return (success, len(error_ids))
 
 if __name__ == "__main__":
     (_, errors) = main()
