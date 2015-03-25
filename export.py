@@ -71,7 +71,9 @@ class YouTubeExporter(object):
                 s3_source_url = s3.get_or_create_unconverted_source_url(
                     youtube_id)
                 if not s3_source_url:
-                    logger.warning("No S3 source URL created; skipping")
+                    logger.warning("No S3 source URL created for %s; skipping"
+                                   % youtube_id)
+                    error_ids.append(youtube_id)
                     continue
 
                 try:
