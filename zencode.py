@@ -22,8 +22,9 @@ def output_types():
 
 def start_converting(youtube_id, s3_url, formats_to_create):
 
-    thumbnail_time = youtube.get_thumbnail_time(youtube_id)
-    assert thumbnail_time
+    # TODO(csilvers): figure out how to get thumbnail times from youtube APIv3
+    #thumbnail_time = youtube.get_thumbnail_time(youtube_id)
+    thumbnail_time = None
 
     zen = Zencoder(zencoder_api_key)
     outputs = []
