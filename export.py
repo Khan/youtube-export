@@ -133,8 +133,12 @@ def main():
             options.max, options.dryrun)
 
     if error_ids:
-        logger.warning('Skipped %d youtube-ids due to errors:\n%s\n'
-                       % (len(error_ids), '\n'.join(error_ids)))
+        msg = ('Skipped %d youtube-ids due to errors:\n%s\n'
+               % (len(error_ids), '\n'.join(error_ids)))
+        logger.warning(msg)
+        # Make this part of the stdout output as well, so it gets passed
+        # from cron to our email.
+        print msg
     return (success, len(error_ids))
 
 if __name__ == "__main__":
