@@ -14,4 +14,4 @@ def popen_results(args):
 
 logger = logging.getLogger("khan")
 
-DOWNLOADABLE_FORMATS = set(["mp4", "m3u8"])
+DOWNLOADABLE_FORMATS = set(["mp3", "mp4", "m3u8"])

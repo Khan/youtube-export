@@ -12,6 +12,7 @@ BASE_URL = "https://s3.amazonaws.com/KA-youtube-converted/"
 def output_types():
     return {
         "mp4": [output_mp4],
+        "mp3": [output_mp3],
         "m3u8": [
             output_m3u8_playlist,
             output_m3u8_low,
@@ -68,6 +69,16 @@ def output_mp4(youtube_id, thumbnail_time):
         }
 
     return output
+
+def output_mp3(youtube_id, thumbnail_time):
+    return {
+        "base_url": BASE_URL,
+        "filename": "%s.mp3/%s.mp3" % (youtube_id, youtube_id),
+        "audio_channels": 1,
+        "audio_quality": 3,
+        "audio_normalize": True,
+        "public": 1
+    }
 
 def output_m3u8_playlist(youtube_id, thumbnail_time):
     return {
