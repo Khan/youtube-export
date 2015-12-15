@@ -1,6 +1,10 @@
 """Encode all videos under a single topic with aggressive compression settings.
 
-This is for testing out and tweaking compression settings.
+This is for testing out and tweaking compression settings. This can also be
+used to run a complete backfill over all our existing videos:
+
+python aggressively_compress_topic.py root \
+        --base-url https://s3.amazonaws.com/KA-youtube-converted/
 """
 import argparse
 import contextlib
@@ -15,7 +19,8 @@ def get_arguments():
             description="Aggressively compress videos under a given topic")
 
     parser.add_argument('topic_slug',
-            help="Slug of topic to encode videos for")
+            help="Slug of topic to encode videos for. Use 'root' to encode "
+                 "all videos (~12K, as of Dec. 2015).")
 
     parser.add_argument("--base-url",
             default="https://s3.amazonaws.com/ka-david-test-bucket/",
@@ -57,13 +62,16 @@ def main():
     youtube_ids = get_youtube_ids(args.topic_slug)
 
     for youtube_id in youtube_ids:
+        # We use the -converted bucket as the source bucket (rather than
+        # -unconverted) because files in the latter get transferred to Glacier
+        # storage, which can't be accessed immediately.
         source_url = "s3://KA-youtube-converted/%s.mp4/%s.mp4" % (
                 youtube_id, youtube_id)
         print "Converting YouTube video %s on Zencoder (source url: %s)" % (
                 youtube_id, source_url)
         if not args.dry_run:
             zencode.start_converting(youtube_id, source_url,
-                    ["mp4", "m3u8"], base_url=args.base_url)
+                    ["mp4_low_only", "m3u8_low_only"], base_url=args.base_url)
 
     print
     print "See %s running jobs at https://app.zencoder.com/jobs" % len(

@@ -15,11 +15,17 @@ def output_types():
             output_mp4_low,
             output_mp4,
         ],
+        "mp4_low_only": [
+            output_mp4_low,
+        ],
         "m3u8": [
             output_m3u8_playlist,
             output_m3u8_low,
             output_m3u8_medium,
             output_m3u8_high,
+        ],
+        "m3u8_low_only": [
+            output_m3u8_low,
         ],
     }
 
