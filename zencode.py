@@ -11,24 +11,15 @@ BASE_URL = "https://s3.amazonaws.com/KA-youtube-converted/"
 
 def output_types():
     return {
-        "mp4": [output_mp4],
-
-        # NOTE: Experimental aggressive compression settings -- not to be part
-        #     of production processing yet.
-        "mp4_aggressive_compression_test": [output_mp4_low],
-
+        "mp4": [
+            output_mp4_low,
+            output_mp4,
+        ],
         "m3u8": [
             output_m3u8_playlist,
             output_m3u8_low,
             output_m3u8_medium,
             output_m3u8_high,
-        ],
-
-        # NOTE: Experimental aggressive compression settings -- not to be part
-        #     of production processing yet.
-        "m3u8_aggressive_compression_test": [
-            output_m3u8_playlist_aggressively_compressed,
-            output_m3u8_aggressively_compressed,
         ],
     }
 
@@ -165,12 +156,27 @@ def output_m3u8_low(youtube_id, thumbnail_time, base_url):
         "type": "segmented",
 
         # Video encoding options
-        "skip_video": True,
+        "video_codec": "h264",
+        "crf": 40,
+        "max_frame_rate": 15,
+        "size": "640x480",
 
         # Audio encoding options
+        "audio_codec": "aac",
+        "audio_bitrate": 8,  # Zencoder can't do lower than 8
         "audio_channels": 1,
-        "audio_quality": 3,
         "audio_normalize": True,
+        "audio_lowpass": 6000,
+
+        "watermarks": [
+            {
+                "width": 128,
+                "height": 16,
+                "x": -2,
+                "y": -2,
+                "url": "http://www.khanacademy.org/images/watermark.png",
+            }
+        ]
     }
 
 def output_m3u8_medium(youtube_id, thumbnail_time, base_url):
@@ -215,49 +221,6 @@ def output_m3u8_high(youtube_id, thumbnail_time, base_url):
 
         # Audio encoding options
         "audio_quality": 3,
-        "audio_normalize": True,
-
-        "watermarks": [
-            {
-                "width": 128,
-                "height": 16,
-                "x": -2,
-                "y": -2,
-                "url": "http://www.khanacademy.org/images/watermark.png",
-            }
-        ]
-    }
-
-def output_m3u8_playlist_aggressively_compressed(
-        youtube_id, thumbnail_time, base_url):
-    return {
-        "public": 1,
-        "base_url": base_url,
-        "filename": "%s.m3u8/%s-compressed.m3u8" % (youtube_id, youtube_id),
-        "streams": [{
-            "bandwidth": 64,
-            "path": "%s-compressed.m3u8" % youtube_id
-        }],
-        "type": "playlist"
-    }
-
-def output_m3u8_aggressively_compressed(youtube_id, thumbnail_time, base_url):
-    return {
-        "base_url": base_url,
-        "filename": "%s.m3u8/%s-compressed.m3u8" % (youtube_id, youtube_id),
-        "public": 1,
-        "type": "segmented",
-
-        # Video encoding options
-        "video_codec": "h264",
-        "crf": 40,
-        "max_frame_rate": 15,
-        "size": "640x480",
-
-        # Audio encoding options
-        "audio_codec": "aac",
-        "audio_bitrate": 8,  # Zencoder can't do lower than 8
-        "audio_channels": 1,
         "audio_normalize": True,
 
         "watermarks": [

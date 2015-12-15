@@ -62,10 +62,8 @@ def main():
         print "Converting YouTube video %s on Zencoder (source url: %s)" % (
                 youtube_id, source_url)
         if not args.dry_run:
-            formats_to_create = ["mp4_aggressive_compression_test", "mp4",
-                    "m3u8", "m3u8_aggressive_compression_test"]
             zencode.start_converting(youtube_id, source_url,
-                    formats_to_create, base_url=args.base_url)
+                    ["mp4", "m3u8"], base_url=args.base_url)
 
     print
     print "See %s running jobs at https://app.zencoder.com/jobs" % len(
