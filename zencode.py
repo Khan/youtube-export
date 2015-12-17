@@ -52,7 +52,18 @@ def start_converting(youtube_id, s3_url, formats_to_create, base_url=BASE_URL):
 def output_mp4_low(youtube_id, thumbnail_time, base_url):
     output = {
         "base_url": base_url,
-        "filename": "%s.mp4/%s-low.mp4" % (youtube_id, youtube_id),
+
+        # Why is the filename format %s.mp4-low/%s-low.mp4 instead of a more
+        # consistent %s-low.mp4/%s-low.mp4?
+        #
+        # [webapp repo]/content/publish.py:update_converted_videos_from_S3()
+        # expects folders of the format YOUTUBE_ID.FORMAT -- it infers the
+        # YOUTUBE_ID from the part before the dot. So if there is a YOUTUBE_ID
+        # that ends in -low, there is the (low) possibility of collision here.
+        # Also, this simplifies changes to update_converted_videos_from_S3() to
+        # extract the presence of this low-size mp4 download URL.
+        "filename": "%s.mp4-low/%s-low.mp4" % (youtube_id, youtube_id),
+
         "public": 1,
         "speed": 1,
         "tuning": "animation",
@@ -83,17 +94,11 @@ def output_mp4_low(youtube_id, thumbnail_time, base_url):
         ]
     }
 
-    # TODO(david): The output folder+filename is the same in this output
-    #    function as output_mp4 below. This could mean that if we process with
-    #    output_mp4 then output_mp4_low, we'll end up with the low-quality
-    #    thumbnail for the regular mp4 video too. However, thumbnail extraction
-    #    is not currently working. If we do want to make it work, look into
-    #    this.
     if thumbnail_time is not None:
         output["thumbnails"] = {
             "times": [thumbnail_time],
             "public": 1,
-            "base_url": "{0}{1}.mp4/".format(base_url, youtube_id),
+            "base_url": "{0}{1}.mp4-low/".format(base_url, youtube_id),
             "filename": youtube_id,
         }
 
