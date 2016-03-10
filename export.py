@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
-import datetime
-import logging
 import optparse
-import os
 import sys
 
 import s3
 import zencode
 import filelock
-from util import logger
+import util
+
+logger = util.logger
 
 
 class YouTubeExporter(object):
@@ -90,31 +89,12 @@ class YouTubeExporter(object):
         return (videos_converted, error_ids)
 
 
-def setup_logging(options):
-    formatter = logging.Formatter(fmt='%(relativeCreated)dms %(message)s')
-
-    if options.nolog:
-        handler = logging.StreamHandler()
-    else:
-        if not os.path.isdir("logs"):
-            os.mkdir("logs")
-
-        strftime = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-
-        handler = logging.FileHandler(
-            'logs/convert_%s.log' % strftime, mode="w")
-
-    handler.setFormatter(formatter)
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(handler)
-
-
 def main():
     parser = optparse.OptionParser()
 
     parser.add_option("-n", "--no-log",
         action="store_true", dest="nolog",
-        help="Don't store log file", default=False)
+        help="Log to stdout instead of to a log file", default=False)
 
     parser.add_option("-m", "--max",
         action="store", dest="max", type="int",
@@ -127,9 +107,9 @@ def main():
 
     options, args = parser.parse_args()
 
-    setup_logging(options)
+    util.setup_logging(options.nolog)
 
-    # Grab a lock that times out after 2 days
+    # Make sure only one youtube-export converter is running at a time.
     with filelock.FileLock("export.lock", timeout=2):
         (success, error_ids) = YouTubeExporter.convert_missing_downloads(
             options.max, options.dryrun)
