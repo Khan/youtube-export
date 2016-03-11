@@ -116,7 +116,7 @@ def main():
 
     if error_ids:
         msg = ('Skipped %d youtube-ids due to errors:\n%s\n'
-               % (len(error_ids), '\n'.join(error_ids)))
+               % (len(error_ids), '\n'.join(sorted(error_ids))))
         logger.warning(msg)
         # Make this part of the stdout output as well, so it gets passed
         # from cron to our email.
