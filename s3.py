@@ -20,8 +20,8 @@ converted_bucket = s3_connection.get_bucket("KA-youtube-converted")
 unconverted_bucket = s3_connection.get_bucket("KA-youtube-unconverted")
 
 # Keys (inside buckets) are in the format YOUTUBE_ID.FORMAT
-# e.g. DK1lCc9b7bg.mp4/ or Dpo_-GrMpNE.m3u8/
-re_video_key_name = re.compile(r"([\w-]+)\.(\w+)/")
+# e.g. DK1lCc9b7bg.m3u8/ or Dpo_-GrMpNE.mp4-low/
+re_video_key_name = re.compile(r"([\w-]+)\.([\w-]+)/")
 
 # Older keys are of the form YOUTUBE_ID
 re_legacy_video_key_name = re.compile(r"([\w-]+)/(.*)$")
