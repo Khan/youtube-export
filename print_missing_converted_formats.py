@@ -36,12 +36,14 @@ def main():
         util.logger.error("MISSING CONVERTED FORMATS:\n%s" % "\n".join(yt))
 
     # Now write today's output out for tomorrow.  We only do this update
-    # once a day, where we round 'day' to 20 hours.
+    # once a day, where we round 'day' to 20 hours.  We need to convert
+    # our set to a list before we can emit it.
+    json_yt = {k: sorted(v) for (k, v) in today_yt}
     if (not os.path.exists(yesterday_fname) or
             os.path.getmtime(yesterday_fname) + 20 * 60 * 60 < time.time()):
         util.logger.info('Saving converted-formats output for use tomorrow')
         with open(yesterday_fname, 'w') as f:
-            json.dump(sorted(today_yt), f)
+            json.dump(json_yt, f, indent=4, sort_key=True)
 
 
 if __name__ == '__main__':
