@@ -38,7 +38,7 @@ def main():
     # Now write today's output out for tomorrow.  We only do this update
     # once a day, where we round 'day' to 20 hours.  We need to convert
     # our set to a list before we can emit it.
-    json_yt = {k: sorted(v) for (k, v) in today_yt}
+    json_yt = {k: sorted(v) for (k, v) in today_yt.iteritems()}
     if (not os.path.exists(yesterday_fname) or
             os.path.getmtime(yesterday_fname) + 20 * 60 * 60 < time.time()):
         util.logger.info('Saving converted-formats output for use tomorrow')
