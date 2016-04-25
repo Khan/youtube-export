@@ -43,7 +43,7 @@ def main():
             os.path.getmtime(yesterday_fname) + 20 * 60 * 60 < time.time()):
         util.logger.info('Saving converted-formats output for use tomorrow')
         with open(yesterday_fname, 'w') as f:
-            json.dump(json_yt, f, indent=4, sort_key=True)
+            json.dump(json_yt, f, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':
