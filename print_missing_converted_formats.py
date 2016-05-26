@@ -33,7 +33,10 @@ def main():
 
     yt = sorted("%s: %s" % (y, sorted(yt[y])) for y in yt if yt[y])
     if yt:
-        util.logger.error("MISSING CONVERTED FORMATS:\n%s" % "\n".join(yt))
+        util.logger.error("MISSING CONVERTED FORMATS:\n%s\n\n"
+                          "To see where these videos are used, run\n"
+                          "   curl 'http://www.khanacademy.org/api/internal/videos/localized/all?format=pretty' | less"
+                          % "\n".join(yt))
 
     # Now write today's output out for tomorrow.  We only do this update
     # once a day, where we round 'day' to 20 hours.  We need to convert
