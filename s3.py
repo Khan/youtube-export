@@ -1,12 +1,20 @@
 import os
 import re
+import sys
 import api
 import youtube
 from os.path import splitext, expanduser
 from collections import defaultdict
-from boto.s3.connection import S3Connection, OrdinaryCallingFormat
-from boto.s3.key import Key
 from util import logger, DOWNLOADABLE_FORMATS
+
+_EXIT_STATUS_MISSING_DEPENDENCY = 2
+
+try:
+    from boto.s3.connection import S3Connection, OrdinaryCallingFormat
+    from boto.s3.key import Key
+except ImportError:
+    sys.stderr.write("Error: missing the Python boto module.\n")
+    sys.exit(_EXIT_STATUS_MISSING_DEPENDENCY)
 
 s3_access_key = open(expanduser('~/s3_access_key')).read().strip()
 s3_secret_key = open(expanduser('~/s3_secret_key')).read().strip()
