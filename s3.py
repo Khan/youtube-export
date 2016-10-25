@@ -1,28 +1,30 @@
+import collections
 import os
 import re
 import sys
-import api
-import youtube
-from os.path import splitext, expanduser
-from collections import defaultdict
-from util import logger, DOWNLOADABLE_FORMATS
 
 _EXIT_STATUS_MISSING_DEPENDENCY = 2
 
 try:
-    from boto.s3.connection import S3Connection, OrdinaryCallingFormat
-    from boto.s3.key import Key
+    import boto.s3.connection
+    import boto.s3.key
 except ImportError:
     sys.stderr.write("Error: missing the Python boto module.\n")
     sys.exit(_EXIT_STATUS_MISSING_DEPENDENCY)
 
-s3_access_key = open(expanduser('~/s3_access_key')).read().strip()
-s3_secret_key = open(expanduser('~/s3_secret_key')).read().strip()
+import api
+import util
+import youtube
+
+
+s3_access_key = open(os.path.expanduser('~/s3_access_key')).read().strip()
+s3_secret_key = open(os.path.expanduser('~/s3_secret_key')).read().strip()
 
 # We use bucket names with uppercase characters, so we must use
 # OrdinaryCallingFormat instead of the default SubdomainCallingFormat
-s3_connection = S3Connection(s3_access_key, s3_secret_key,
-                             calling_format=OrdinaryCallingFormat())
+s3_connection = boto.s3.connection.S3Connection(
+    s3_access_key, s3_secret_key, 
+    calling_format=boto.s3.connection.OrdinaryCallingFormat())
 
 converted_bucket = s3_connection.get_bucket("KA-youtube-converted")
 unconverted_bucket = s3_connection.get_bucket("KA-youtube-unconverted")
@@ -47,40 +49,43 @@ def get_or_create_unconverted_source_url(youtube_id):
 
     if matching_keys:
         if len(matching_keys) > 1:
-            logger.warning("More than 1 matching unconverted video "
-                           "URL found for video {0}".format(youtube_id))
+            util.logger.warning("More than 1 matching unconverted video "
+                                "URL found for video {0}".format(youtube_id))
         matching_key = matching_keys[0]
     else:
-        logger.info("Unconverted video not available on s3 yet, "
-                    "downloading from youtube to create it.")
+        util.logger.info("Unconverted video not available on s3 yet, "
+                         "downloading from youtube to create it.")
 
         video_path = youtube.download(youtube_id)
         if not video_path:
-            logger.warning("Error downloading video {0}".format(youtube_id))
+            message = "Error downloading video {0}".format(youtube_id)
+            util.logger.warning(message)
             return
-        logger.info("Downloaded video to {0}".format(video_path))
+        util.logger.info("Downloaded video to {0}".format(video_path))
 
-        video_extension = splitext(video_path)[1]
+        video_extension = os.path.splitext(video_path)[1]
         assert video_extension[0] == "."
         video_extension = video_extension[1:]
         if video_extension not in ["flv", "mp4"]:
-            logger.warning("Unrecognized video extension {0} when downloading "
-                           "video {1} from YouTube".format(
-                               video_extension, youtube_id))
+            message = ("Unrecognized video extension {0} when downloading "
+                       "video {1} from YouTube".format(video_extension,
+                                                       youtube_id))
+            util.logger.warning(message)
 
-        matching_key = Key(unconverted_bucket, "{0}/{0}.{1}".format(
-            youtube_id, video_extension))
+        matching_key = boto.s3.key.Key(unconverted_bucket,
+                                       "{0}/{0}.{1}".format(youtube_id,
+                                                            video_extension))
         matching_key.set_contents_from_filename(video_path)
 
         os.remove(video_path)
-        logger.info("Deleted {0}".format(video_path))
+        util.logger.info("Deleted {0}".format(video_path))
 
     return "s3://{0}/{1}".format(unconverted_bucket.name, matching_key.name)
 
 
 def list_converted_formats():
     """Get map of youtube_ids (keys) to set of available converted formats."""
-    converted_videos = defaultdict(set)
+    converted_videos = collections.defaultdict(set)
     legacy_video_keys = set()
     for key in converted_bucket.list(delimiter="/"):
         video_match = re_video_key_name.match(key.name)
@@ -88,11 +93,11 @@ def list_converted_formats():
             if re_legacy_video_key_name.match(key.name) is not None:
                 legacy_video_keys.add(key.name)
             else:
-                logger.warning("Unrecognized key {0} is not in format "
-                               "YOUTUBE_ID.FORMAT/".format(key.name))
+                util.logger.warning("Unrecognized key {0} is not in format "
+                                    "YOUTUBE_ID.FORMAT/".format(key.name))
         else:
             converted_videos[video_match.group(1)].add(video_match.group(2))
-    logger.info("{0} legacy converted videos were ignored".format(
+    util.logger.info("{0} legacy converted videos were ignored".format(
         len(legacy_video_keys)))
     return converted_videos
 
@@ -120,7 +125,7 @@ def copy_legacy_content_to_new_location(youtube_id):
         assert legacy_match is not None
         assert legacy_match.group(1) == youtube_id
         dest_key = "{0}.mp4/{1}".format(youtube_id, legacy_match.group(2))
-        logger.info("Copying {0} to {1}".format(key.name, dest_key))
+        util.logger.info("Copying {0} to {1}".format(key.name, dest_key))
         key.copy(converted_bucket.name, dest_key, preserve_acl=True)
 
 
@@ -130,5 +135,5 @@ def list_missing_converted_formats():
     converted_formats = list_converted_formats()
     for youtube_id in api.get_youtube_ids():
         missing_converted_formats[youtube_id] = (
-            DOWNLOADABLE_FORMATS - converted_formats[youtube_id])
+            util.DOWNLOADABLE_FORMATS - converted_formats[youtube_id])
     return missing_converted_formats
