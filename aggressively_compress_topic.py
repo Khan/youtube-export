@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 """Encode all videos under a single topic with aggressive compression settings.
 
 This is for testing out and tweaking compression settings. This can also be
@@ -16,17 +17,25 @@ import zencode
 
 def get_arguments():
     parser = argparse.ArgumentParser(
-            description="Aggressively compress videos under a given topic")
+            description="Aggressively compress videos under a given topic",
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('topic_slug',
             help="Slug of topic to encode videos for. Use 'root' to encode "
                  "all videos (~12K, as of Dec. 2015).")
 
-    parser.add_argument("--base-url",
+    parser.add_argument("-b", "--base-url",
             default="https://s3.amazonaws.com/ka-david-test-bucket/",
             help="Base S3 URL for output")
 
-    parser.add_argument("--dry-run", action="store_true", default=False,
+    parser.add_argument("-c", "--config-group",
+            dest="config_groups", action='append',
+            default=["m3u8_low_only", "mp4_low_only"],
+            choices=sorted(zencode.output_types().keys()),
+            help=("A zencode.py configuration group to use.  May be specified "
+                  "multiple times to use more than one group."))
+
+    parser.add_argument("-d", "--dry-run", action="store_true", default=False,
             help="Don't start Zencoder jobs; just print videos to be encoded")
 
     return parser.parse_args()
@@ -58,6 +67,10 @@ def get_youtube_ids(topic_slug):
 def main():
     args = get_arguments()
 
+    config_groups = args.config_groups.split(',')
+    print ("Will encode videos using settings from the following "
+           "configuration groups: %s" % config_groups)
+
     print "Fetching video YouTube IDs under topic %s" % args.topic_slug
     youtube_ids = get_youtube_ids(args.topic_slug)
 
@@ -70,8 +83,8 @@ def main():
         print "Converting YouTube video %s on Zencoder (source url: %s)" % (
                 youtube_id, source_url)
         if not args.dry_run:
-            zencode.start_converting(youtube_id, source_url,
-                    ["mp4_low_only", "m3u8_low_only"], base_url=args.base_url)
+            zencode.start_converting(youtube_id, source_url, config_groups,
+                                     base_url=args.base_url)
 
     print
     print "See %s running jobs at https://app.zencoder.com/jobs" % len(
