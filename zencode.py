@@ -18,6 +18,9 @@ def output_types():
         "mp4_low_only": [
             output_mp4_low,
         ],
+        "mp4_low_ios_only": [
+            output_mp4_low_ios,
+        ],
         "m3u8": [
             output_m3u8_playlist,
             output_m3u8_low,
@@ -101,6 +104,83 @@ def output_mp4_low(youtube_id, thumbnail_time, base_url):
             "times": [thumbnail_time],
             "public": 1,
             "base_url": "{0}{1}.mp4-low/".format(base_url, youtube_id),
+            "filename": youtube_id,
+        }
+
+    return output
+
+
+def output_mp4_low_ios(youtube_id, thumbnail_time, base_url):
+    """Zencoder configuration for low-bitrate iOS downloadable videos.
+
+    Previously, we started using the AMR audio codec for our "mp4-low" videos.
+    Unfortunately, iOS devices (since iOS 4.3) no longer support AMR playback.
+    This configuration instead uses a low-bitrate AAC configuration.
+
+    See https://docs.google.com/document/d/
+            1yKz92Vx4nxWt-9h-xRut7CipNP1FP3E1YpX3pL0QubM
+    """
+
+    # TODO(pepas): DRY out all of these output_* functions.
+
+    # Why is the filename format %s.mp4-low/%s-low.mp4 instead of a more
+    # consistent %s-low.mp4/%s-low.mp4?
+    #
+    # [webapp repo]/content/publish.py:update_converted_videos_from_S3()
+    # expects folders of the format YOUTUBE_ID.FORMAT -- it infers the
+    # YOUTUBE_ID from the part before the dot. So if there is a YOUTUBE_ID
+    # that ends in -low, there is the (low) possibility of collision here.
+    # Also, this simplifies changes to update_converted_videos_from_S3() to
+    # extract the presence of this low-size mp4 download URL.
+    destination_directory = "%s.mp4-low-ios" % youtube_id
+    destination_filename = "%s-low-ios.mp4" % youtube_id
+
+    # See https://app.zencoder.com/docs/api/encoding
+    output = {
+        "strict": True,
+
+        "base_url": base_url,
+        "filename": "%s/%s" % (destination_directory, destination_filename),
+
+        "public": 1,
+        "speed": 1,
+        "tuning": "animation",
+
+        "format": "mp4",
+
+        # Video encoding options
+        "video_codec": "h264",
+        "crf": 40,
+        "max_frame_rate": 15,
+        "size": "640x480",
+
+        # Audio encoding options
+        # Note(pepas): These settings are based on `output_m3u8_low`, but with
+        # the bitrate bumped up to 16kbit.  See the encoding comparison at
+        # https://console.aws.amazon.com/s3/home?region=us-east-1#
+        #     &bucket=ka-jason-test-bucket&prefix=FXSuEIMrPQk.mp4-low/
+        "audio_codec": "aac",
+        "audio_bitrate": 16,
+        "audio_channels": 1,
+        "audio_normalize": True,
+        "audio_lowpass": 6000,
+
+        "watermarks": [
+            {
+                "width": 128,
+                "height": 16,
+                "x": -2,
+                "y": -2,
+                "url": "http://www.khanacademy.org/images/watermark.png",
+            }
+        ]
+    }
+
+    if thumbnail_time is not None:
+        output["thumbnails"] = {
+            "times": [thumbnail_time],
+            "public": 1,
+            "base_url": "{0}{1}/".format(base_url, destination_directory),
             "filename": youtube_id,
         }
 
