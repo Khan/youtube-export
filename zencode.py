@@ -1,13 +1,13 @@
-import logging
 import os
-import youtube
 
 from zencoder import Zencoder
 from util import logger
 
-zencoder_api_key = open(os.path.expanduser('~/zencoder_api_key')).read().strip()
+zencoder_api_key = (open(os.path.expanduser('~/zencoder_api_key')).read()
+                    .strip())
 
 BASE_URL = "https://s3.amazonaws.com/KA-youtube-converted/"
+
 
 def output_types():
     return {
@@ -29,6 +29,7 @@ def output_types():
         ],
     }
 
+
 def start_converting(youtube_id, s3_url, formats_to_create, base_url=BASE_URL):
 
     # TODO(csilvers): figure out how to get thumbnail times from youtube APIv3
@@ -48,6 +49,7 @@ def start_converting(youtube_id, s3_url, formats_to_create, base_url=BASE_URL):
     assert job_response.code == 201, job_response.body
 
     logger.info("Zencoder job created successfully")
+
 
 def output_mp4_low(youtube_id, thumbnail_time, base_url):
     output = {
@@ -104,6 +106,7 @@ def output_mp4_low(youtube_id, thumbnail_time, base_url):
 
     return output
 
+
 def output_mp4(youtube_id, thumbnail_time, base_url):
     output = {
         "base_url": base_url,
@@ -137,27 +140,29 @@ def output_mp4(youtube_id, thumbnail_time, base_url):
 
     return output
 
+
 def output_m3u8_playlist(youtube_id, thumbnail_time, base_url):
     return {
-		"public": 1,
-		"base_url": base_url,
+        "public": 1,
+        "base_url": base_url,
         "filename": "%s.m3u8/%s.m3u8" % (youtube_id, youtube_id),
-		"streams": [
+        "streams": [
             {
-			    "bandwidth": 640,
-    			"path": "%s-high.m3u8" % youtube_id
-		    },
+                "bandwidth": 640,
+                "path": "%s-high.m3u8" % youtube_id
+            },
             {
-			    "bandwidth": 160,
-    			"path": "%s-medium.m3u8" % youtube_id
-		    },
+                "bandwidth": 160,
+                "path": "%s-medium.m3u8" % youtube_id
+            },
             {
-			    "bandwidth": 64,
-    			"path": "%s-low.m3u8" % youtube_id
-		    },
-            ],
-		"type": "playlist"
-	}
+                "bandwidth": 64,
+                "path": "%s-low.m3u8" % youtube_id
+            },
+        ],
+        "type": "playlist"
+    }
+
 
 def output_m3u8_low(youtube_id, thumbnail_time, base_url):
     return {
@@ -190,9 +195,10 @@ def output_m3u8_low(youtube_id, thumbnail_time, base_url):
         ]
     }
 
+
 def output_m3u8_medium(youtube_id, thumbnail_time, base_url):
     return {
-		"public": 1,
+        "public": 1,
         "base_url": base_url,
         "bitrate_cap": 120,
         "buffer_size": 480,
@@ -219,9 +225,10 @@ def output_m3u8_medium(youtube_id, thumbnail_time, base_url):
         ]
     }
 
+
 def output_m3u8_high(youtube_id, thumbnail_time, base_url):
     return {
-		"public": 1,
+        "public": 1,
         "base_url": base_url,
         "filename": "%s.m3u8/%s-high.m3u8" % (youtube_id, youtube_id),
         "type": "segmented",
