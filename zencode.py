@@ -43,8 +43,9 @@ def start_converting(youtube_id, s3_url, formats_to_create, base_url=BASE_URL):
     outputs = []
 
     for format_to_create in formats_to_create:
-        if format_to_create in output_types():
-            outputs += [fxn(youtube_id, thumbnail_time, base_url)
+        assert format_to_create in output_types(), (format_to_create,
+                                                    output_types())
+        outputs += [fxn(youtube_id, thumbnail_time, base_url)
                     for fxn in output_types()[format_to_create]]
     
     job_response = zen.job.create(s3_url, outputs=outputs)
