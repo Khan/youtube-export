@@ -26,19 +26,23 @@ def get_arguments():
 
     parser.add_argument("-b", "--base-url",
             default="https://s3.amazonaws.com/ka-david-test-bucket/",
-            help="Base S3 URL for output")
+            help="Base S3 URL for output.")
 
-    parser.add_argument("-c", "--config-group",
-            dest="config_groups", action='append',
-            default=["m3u8_low_only", "mp4_low_only"],
-            choices=sorted(zencode.output_types().keys()),
-            help=("A zencode.py configuration group to use.  May be specified "
-                  "multiple times to use more than one group."))
+    parser.add_argument("-c", "--config-groups",
+            default="m3u8_low_only,mp4_low_only",
+            help=("A list of zencode.py configuration groups to use.  "
+                  "Available options: %s" % ", ".join(zencode.output_types()
+                                                      .keys())))
 
     parser.add_argument("-d", "--dry-run", action="store_true", default=False,
-            help="Don't start Zencoder jobs; just print videos to be encoded")
+            help="Don't start Zencoder jobs; just print videos to be encoded.")
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.config_groups = args.config_groups.split(',')
+    for config_group in args.config_groups:
+        if config_group not in zencode.output_types():
+            parser.error("Not a valid config group: %s" % config_group)
+    return args
 
 
 def get_youtube_ids(topic_slug):
@@ -67,9 +71,8 @@ def get_youtube_ids(topic_slug):
 def main():
     args = get_arguments()
 
-    config_groups = args.config_groups.split(',')
     print ("Will encode videos using settings from the following "
-           "configuration groups: %s" % config_groups)
+           "configuration groups: %s" % ", ".join(args.config_groups))
 
     print "Fetching video YouTube IDs under topic %s" % args.topic_slug
     youtube_ids = get_youtube_ids(args.topic_slug)
@@ -83,8 +86,9 @@ def main():
         print "Converting YouTube video %s on Zencoder (source url: %s)" % (
                 youtube_id, source_url)
         if not args.dry_run:
-            zencode.start_converting(youtube_id, source_url, config_groups,
-                                     base_url=args.base_url)
+            zencode.start_converting(
+                youtube_id, source_url, args.config_groups,
+                base_url=args.base_url)
 
     print
     print "See %s running jobs at https://app.zencoder.com/jobs" % len(
