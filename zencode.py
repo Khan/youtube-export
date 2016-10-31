@@ -164,7 +164,13 @@ def output_mp4_low_ios(youtube_id, thumbnail_time, base_url):
         "audio_bitrate": 16,
         "audio_channels": 1,
         "audio_normalize": True,
-        "audio_lowpass": 6000,
+        # Update(pepas): Additionally, we are lowering the lowpass filter to
+        # 5kHz, as there were some unfortunately headache-inducing ringing
+        # artifacts somewhere around 6kHz.  See the listening test at
+        # https://console.aws.amazon.com/s3/home?region=us-east-1
+        #     #&bucket=ka-jason-test-bucket
+        #     &prefix=lowpass_test_IYFkXWlgC_w.mp4-low-ios/
+        "audio_lowpass": 5000,
 
         "watermarks": [
             {
