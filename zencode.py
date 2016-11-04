@@ -12,6 +12,7 @@ BASE_URL = "https://s3.amazonaws.com/KA-youtube-converted/"
 def output_types():
     return {
         "mp4": [
+            output_mp4_low_ios,
             output_mp4_low,
             output_mp4,
         ],
