@@ -50,8 +50,12 @@ def download(youtube_id):
     video_filename_template = youtube_id + ".%(ext)s"
     video_path_template = os.path.join(temp_dir, video_filename_template)
 
-    command_args = ["python", "youtube-dl/youtube-dl.py", "--max-quality",
-                    "22", "-icw", "-o", video_path_template, youtube_url]
+    # Download a copy of the video from YouTube, but limit the resolution to
+    # no more than "720p".  For details on the '--format' option, see
+    # https://github.com/rg3/youtube-dl/blob/master/README.md#format-selection
+    command_args = ["python", "youtube-dl/youtube-dl.py", "--format",
+                    "best[height<=720]", "-icw", "-o", video_path_template,
+                    youtube_url]
     results = popen_results(command_args)
     logger.info(results)
 
