@@ -1,26 +1,32 @@
-import logging
-import tempfile
-import os
-import urllib2
 import json
+import os
 import re
+import tempfile
+import urllib2
 
 from util import popen_results, logger
 
-re_time = re.compile(r"(?P<hour>\d+):(?P<min>\d+):(?P<sec>\d+)(\.(?P<frac>\d+))?")
+re_time = re.compile(
+    r"(?P<hour>\d+):(?P<min>\d+):(?P<sec>\d+)(\.(?P<frac>\d+))?")
+
 
 def parse_time(t):
     m = re_time.match(t)
-    if m is None: return None
-    secs = float(int(m.group("hour")) * 60 * 60 + int(m.group("min")) * 60 + int(m.group("sec")))
+    if m is None:
+        return None
+    secs = float(int(m.group("hour")) * 60 * 60 +
+                 int(m.group("min")) * 60 +
+                 int(m.group("sec")))
     if m.group("frac") is not None:
         secs += float("0.%s" % (m.group("frac"),))
     return secs
 
+
 def get_thumbnail_time(youtube_id):
     thumbnail_time = None
 
-    info_url = "http://gdata.youtube.com/feeds/api/videos/%s?alt=json" % (youtube_id,)
+    info_url = ("http://gdata.youtube.com/feeds/api/videos/%s?alt=json" %
+                youtube_id)
     info_stream = urllib2.urlopen(info_url)
     info = json.load(info_stream)
 
@@ -34,6 +40,7 @@ def get_thumbnail_time(youtube_id):
 
     return thumbnail_time
 
+
 def download(youtube_id):
     temp_dir = tempfile.mkdtemp()
 
@@ -43,7 +50,8 @@ def download(youtube_id):
     video_filename_template = youtube_id + ".%(ext)s"
     video_path_template = os.path.join(temp_dir, video_filename_template)
 
-    command_args = ["python", "youtube-dl/youtube-dl.py", "--max-quality", "22", "-icw", "-o", video_path_template, youtube_url]
+    command_args = ["python", "youtube-dl/youtube-dl.py", "--max-quality",
+                    "22", "-icw", "-o", video_path_template, youtube_url]
     results = popen_results(command_args)
     logger.info(results)
 
