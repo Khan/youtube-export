@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+# TODO(colin): fix these lint errors (http://pep8.readthedocs.io/en/release-1.7.x/intro.html#error-codes)
+# pep8-disable:E128
 """Encode all videos under a single topic with aggressive compression settings.
 
 This is for testing out and tweaking compression settings. This can also be

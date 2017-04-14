@@ -1,3 +1,5 @@
+# TODO(colin): fix these lint errors (http://pep8.readthedocs.io/en/release-1.7.x/intro.html#error-codes)
+# pep8-disable:E111,E114,E124,E125,E127,E128,E131,E201,E202,E203,E221,E222,E225,E231,E251,E261,E265,E271,E272,E301,E302,E303,E501,E701,E711,E713,W601,W602
 from __future__ import generators
 """
 httplib2
@@ -958,7 +960,7 @@ try:
       self.port = port
       self.timeout = timeout
       if key_file or cert_file or proxy_info or ca_certs:
-        raise NotSupportedOnThisPlatform()
+        raise NotSupportedOnThisPlatform()  # @Nolint(undefined)
       self.response = None
       self.scheme = 'http'
       self.validate_certificate = not disable_certificate_validation
