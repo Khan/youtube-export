@@ -1,5 +1,3 @@
-# TODO(colin): fix these lint errors (http://pep8.readthedocs.io/en/release-1.7.x/intro.html#error-codes)
-# pep8-disable:E128,E228,E231,E261,E302,E501,E502
 """
 The MIT License
 
@@ -401,7 +399,7 @@ class OAuthServer(object):
             token = self._get_token(oauth_request, 'request')
         except OAuthError:
             # No token required for the initial token request.
-            version = self._get_version(oauth_request)  # @Nolint(unused)
+            version = self._get_version(oauth_request)
             consumer = self._get_consumer(oauth_request)
             try:
                 callback = self.get_callback(oauth_request)
@@ -418,7 +416,7 @@ class OAuthServer(object):
         """Processes an access_token request and returns the
         access token on success.
         """
-        version = self._get_version(oauth_request)  # @Nolint(unused)
+        version = self._get_version(oauth_request)
         consumer = self._get_consumer(oauth_request)
         try:
             verifier = self._get_verifier(oauth_request)
@@ -433,7 +431,7 @@ class OAuthServer(object):
     def verify_request(self, oauth_request):
         """Verifies an api call and checks all the parameters."""
         # -> consumer and token
-        version = self._get_version(oauth_request)  # @Nolint(unused)
+        version = self._get_version(oauth_request)
         consumer = self._get_consumer(oauth_request)
         # Get the access token.
         token = self._get_token(oauth_request, 'access')
@@ -517,7 +515,7 @@ class OAuthServer(object):
             logging.error("base: %s",base)
             raise OAuthError('Invalid signature. Expected signature base '
                 'string: %s' % base)
-        built = signature_method.build_signature(oauth_request, consumer, token)  # @Nolint(unused)
+        built = signature_method.build_signature(oauth_request, consumer, token)
 
     def _check_timestamp(self, timestamp):
         """Verify that timestamp is recentish."""

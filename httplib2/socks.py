@@ -1,5 +1,3 @@
-# TODO(colin): fix these lint errors (http://pep8.readthedocs.io/en/release-1.7.x/intro.html#error-codes)
-# pep8-disable:E128,E225,E231,E302,E501,E701,E711,E721
 """SocksiPy - Python SOCKS module.
 Version 1.00
 
@@ -44,6 +42,7 @@ mainly to merge bug fixes found in Sourceforge
 
 import socket
 import struct
+import sys
 
 if getattr(socket, 'socket', None) is None:
     raise ImportError('socket.socket missing, proxy support unusable')
