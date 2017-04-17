@@ -1,0 +1,5 @@
+httplib2/
+oauth/
+simplejson/
+youtube-dl/
+zencoder/
