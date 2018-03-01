@@ -23,7 +23,7 @@ s3_secret_key = open(os.path.expanduser('~/s3_secret_key')).read().strip()
 # We use bucket names with uppercase characters, so we must use
 # OrdinaryCallingFormat instead of the default SubdomainCallingFormat
 s3_connection = boto.s3.connection.S3Connection(
-    s3_access_key, s3_secret_key, 
+    s3_access_key, s3_secret_key,
     calling_format=boto.s3.connection.OrdinaryCallingFormat())
 
 converted_bucket = s3_connection.get_bucket("KA-youtube-converted")
@@ -44,7 +44,7 @@ def get_or_create_unconverted_source_url(youtube_id):
     # video files and should be ignored.
     matching_keys = [key for key in matching_keys
                      if not key.name.endswith('.part')]
-                     
+
     matching_key = None
 
     if matching_keys:
@@ -104,7 +104,7 @@ def list_converted_formats():
 
 def list_legacy_mp4_videos():
     """Return a set of legacy converted youtube_ids.
-    
+
     Returns youtube ids of videos that have legacy mp4/png converted
     content saved on S3. You can pass these ids to
     copy_legacy_content_to_new_location.

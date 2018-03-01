@@ -125,6 +125,7 @@ def main():
         print msg
     return (success, len(error_ids))
 
+
 if __name__ == "__main__":
     (_, errors) = main()
     sys.exit(errors)

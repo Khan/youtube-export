@@ -90,7 +90,7 @@ class OAuthConsumer(object):
 class OAuthToken(object):
     """OAuthToken is a data type that represents an End User via either an access
     or request token.
-    
+
     key -- the token
     secret -- the token secret
 
@@ -136,7 +136,7 @@ class OAuthToken(object):
         if self.callback_confirmed is not None:
             data['oauth_callback_confirmed'] = self.callback_confirmed
         return urllib.urlencode(data)
- 
+
     def from_string(s):
         """ Returns a token from something like:
         oauth_token_secret=xxx&oauth_token=xxx
@@ -160,11 +160,11 @@ class OAuthRequest(object):
     """OAuthRequest represents the request and can be serialized.
 
     OAuth parameters:
-        - oauth_consumer_key 
+        - oauth_consumer_key
         - oauth_token
         - oauth_signature_method
-        - oauth_signature 
-        - oauth_timestamp 
+        - oauth_signature
+        - oauth_timestamp
         - oauth_nonce
         - oauth_version
         - oauth_verifier
@@ -446,7 +446,7 @@ class OAuthServer(object):
     def get_callback(self, oauth_request):
         """Get the callback URL."""
         return oauth_request.get_parameter('oauth_callback')
- 
+
     def build_authenticate_header(self, realm=''):
         """Optional support for the authenticate header."""
         return {'WWW-Authenticate': 'OAuth realm="%s"' % realm}
@@ -492,7 +492,7 @@ class OAuthServer(object):
         if not token:
             raise OAuthError('Invalid %s token: %s' % (token_type, token_field))
         return token
-    
+
     def _get_verifier(self, oauth_request):
         return oauth_request.get_parameter('oauth_verifier')
 
@@ -614,7 +614,7 @@ class OAuthSignatureMethod_HMAC_SHA1(OAuthSignatureMethod):
 
     def get_name(self):
         return 'HMAC-SHA1'
-        
+
     def build_signature_base_string(self, oauth_request, consumer, token):
         sig = (
             escape(oauth_request.get_normalized_http_method()),
@@ -633,8 +633,8 @@ class OAuthSignatureMethod_HMAC_SHA1(OAuthSignatureMethod):
         key, raw = self.build_signature_base_string(oauth_request, consumer,
             token)
 
-        if isinstance(key, unicode): 
-            key = str(key)  
+        if isinstance(key, unicode):
+            key = str(key)
 
         # HMAC object.
         try:

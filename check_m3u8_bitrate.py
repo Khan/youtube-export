@@ -16,6 +16,7 @@ class HeadRequest(urllib2.Request):
     def get_method(self):
         return "HEAD"
 
+
 header_row = ["youtube_id", "duration", "total_bytes", "kbps"]
 existing_youtube_ids = set()
 existing_rows = []
@@ -36,13 +37,13 @@ writer.writerows(existing_rows)
 
 for v in list_videos():
     if v["youtube_id"] in existing_youtube_ids: continue
-    
+
     if "download_urls" not in v: continue
     if v["download_urls"] is None: continue
-    
+
     url = v["download_urls"].get("m3u8", None)
     if url is None: continue
-    
+
     # Munge the URL to get the low-kbps stream
     url = re_url.sub("-low.m3u8", url)
     try:
@@ -52,7 +53,7 @@ for v in list_videos():
             print >>sys.stderr, "No duration match for {0}".format(url)
             continue
         duration = float(duration_match.group(1))
-        
+
         total_bytes = 0
         for segment_name in re_segment_name.finditer(doc):
             segment_url = urljoin(url, segment_name.group(0))
@@ -63,6 +64,6 @@ for v in list_videos():
     except urllib2.URLError:
         print >>sys.stderr, "URLError for {0}".format(url)
         continue
-    
+
     writer.writerow([v["youtube_id"], duration, total_bytes, (total_bytes / 125.0) / duration])
     existing_youtube_ids.add(v["youtube_id"])

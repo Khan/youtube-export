@@ -6,7 +6,7 @@ _id_list = None
 
 def get_youtube_ids():
     """Retrieve all the YouTube IDs (including translations) from KA.org.
-    
+
     This will fetch all the publicly-visible YouTube IDs on the site in all
     languages and return them as a big, flat list.
     """
@@ -35,6 +35,5 @@ def get_youtube_ids():
             youtube_id = s["revision"].get("youtube_id")
             if youtube_id:
                 _id_list.append(youtube_id)
-    
-    return _id_list
 
+    return _id_list

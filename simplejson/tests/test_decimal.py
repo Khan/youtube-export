@@ -22,11 +22,11 @@ class TestDecimal(TestCase):
     def test_decimal_encode(self):
         for d in map(Decimal, self.NUMS):
             self.assertEquals(self.dumps(d, use_decimal=True), str(d))
-    
+
     def test_decimal_decode(self):
         for s in self.NUMS:
             self.assertEquals(self.loads(s, parse_float=Decimal), Decimal(s))
-    
+
     def test_decimal_roundtrip(self):
         for d in map(Decimal, self.NUMS):
             # The type might not be the same (int and Decimal) but they
