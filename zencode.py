@@ -5,8 +5,7 @@ import os
 from zencoder import Zencoder
 from util import logger
 
-zencoder_api_key = (open(os.path.expanduser('~/zencoder_api_key')).read()
-                    .strip())
+zencoder_api_key = os.environ['ZENCODER_API_KEY']
 
 BASE_URL = "https://s3.amazonaws.com/KA-youtube-converted/"
 

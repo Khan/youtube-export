@@ -16,9 +16,8 @@ import api
 import util
 import youtube
 
-
-s3_access_key = open(os.path.expanduser('~/s3_access_key')).read().strip()
-s3_secret_key = open(os.path.expanduser('~/s3_secret_key')).read().strip()
+s3_access_key = os.environ['S3_ACCESS_KEY']
+s3_secret_key = os.environ['S3_SECRET_KEY']
 
 # We use bucket names with uppercase characters, so we must use
 # OrdinaryCallingFormat instead of the default SubdomainCallingFormat
