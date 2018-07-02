@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Figure out what directory we're *really* in (following symlinks).
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
