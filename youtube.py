@@ -53,9 +53,12 @@ def download(youtube_id):
     # Download a copy of the video from YouTube, but limit the resolution to
     # no more than "720p".  For details on the '--format' option, see
     # https://github.com/rg3/youtube-dl/blob/master/README.md#format-selection
+    # We use the --restrict-filenames option to make sure our file names are
+    # encoded in properly (since international videos may use non-ASCII
+    # characters)
     command_args = ["python", "youtube-dl/youtube-dl.py", "--format",
-                    "best[height<=720]", "-icw", "-o", video_path_template,
-                    youtube_url]
+                    "best[height<=720]", "-icw", "--restrict-filenames", "-o",
+                    video_path_template, youtube_url]
     results = popen_results(command_args)
     logger.info(results)
 
