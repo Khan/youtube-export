@@ -4,15 +4,15 @@ import os
 import json
 import time
 
-import s3
+import gcs
 import util
 
 
 def main():
     util.setup_logging()
 
-    util.logger.info('Running s3.list_missing_converted_formats()')
-    today_yt = s3.list_missing_converted_formats()
+    util.logger.info('Running gcs.list_missing_converted_formats()')
+    today_yt = gcs.list_missing_converted_formats()
 
     # Because we will always be missing formats for new youtube videos
     # that are still in the process of being converted, we only

@@ -1,2 +1,6 @@
 progressbar==2.2
 boto==2.2.2
+google-cloud-storage==1.8.0
+# google-cloud-storage also depends on a recent requests, but somehow it's not
+# being installed. Let's install it ourselves.
+requests==2.18.4

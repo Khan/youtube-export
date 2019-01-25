@@ -45,7 +45,7 @@ def print_zencode_config_with_fake_args(function):
     """
     youtube_id = "FAKE_YTB_ID"
     thumbnail_time = 42
-    base_url = "https://s3.amazonaws.com/FAKE_S3_BUCKET/"
+    base_url = "gcs://FAKE_S3_BUCKET/"
     zencoder_config = function(youtube_id, thumbnail_time, base_url)
     pretty_print_dict(zencoder_config)
 

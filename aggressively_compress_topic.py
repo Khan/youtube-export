@@ -7,7 +7,7 @@ This is for testing out and tweaking compression settings. This can also be
 used to run a complete backfill over all our existing videos:
 
 python aggressively_compress_topic.py root \
-        --base-url https://s3.amazonaws.com/KA-youtube-converted/
+        --base-url gcs://ka-youtube-converted/
 """
 import argparse
 import contextlib
@@ -27,8 +27,8 @@ def get_arguments():
                  "all videos (~12K, as of Dec. 2015).")
 
     parser.add_argument("-b", "--base-url",
-            default="https://s3.amazonaws.com/ka-david-test-bucket/",
-            help="Base S3 URL for output.")
+            default="gcs://ka-david-test-bucket/",
+            help="Base GCS URL for output.")
 
     parser.add_argument("-c", "--config-groups",
             default="m3u8_low_only,mp4_low_only",
@@ -83,7 +83,7 @@ def main():
         # We use the -converted bucket as the source bucket (rather than
         # -unconverted) because files in the latter get transferred to Glacier
         # storage, which can't be accessed immediately.
-        source_url = "s3://KA-youtube-converted/%s.mp4/%s.mp4" % (
+        source_url = "gcs://ka-youtube-converted/%s.mp4/%s.mp4" % (
                 youtube_id, youtube_id)
         print "Converting YouTube video %s on Zencoder (source url: %s)" % (
                 youtube_id, source_url)

@@ -7,7 +7,7 @@ from util import logger
 
 zencoder_api_key = os.environ['ZENCODER_API_KEY']
 
-BASE_URL = "https://s3.amazonaws.com/KA-youtube-converted/"
+BASE_URL = "gcs://ka-youtube-converted/"
 
 
 def output_types():
@@ -35,7 +35,8 @@ def output_types():
     }
 
 
-def start_converting(youtube_id, s3_url, formats_to_create, base_url=BASE_URL):
+def start_converting(youtube_id, gcs_url,
+                     formats_to_create, base_url=BASE_URL):
 
     # TODO(csilvers): figure out how to get thumbnail times from youtube APIv3
     #thumbnail_time = youtube.get_thumbnail_time(youtube_id)
@@ -50,7 +51,7 @@ def start_converting(youtube_id, s3_url, formats_to_create, base_url=BASE_URL):
         outputs += [fxn(youtube_id, thumbnail_time, base_url)
                     for fxn in output_types()[format_to_create]]
 
-    job_response = zen.job.create(s3_url, outputs=outputs)
+    job_response = zen.job.create(gcs_url, outputs=outputs)
 
     assert job_response.code == 201, job_response.body
 
@@ -64,12 +65,12 @@ def output_mp4_low(youtube_id, thumbnail_time, base_url):
         # Why is the filename format %s.mp4-low/%s-low.mp4 instead of a more
         # consistent %s-low.mp4/%s-low.mp4?
         #
-        # [webapp repo]/content/publish.py:update_converted_videos_from_S3()
+        # [webapp repo]/content/publish.py:update_converted_videos_from_GCS()
         # expects folders of the format YOUTUBE_ID.FORMAT -- it infers the
         # YOUTUBE_ID from the part before the dot. So if there is a YOUTUBE_ID
         # that ends in -low, there is the (low) possibility of collision here.
-        # Also, this simplifies changes to update_converted_videos_from_S3() to
-        # extract the presence of this low-size mp4 download URL.
+        # Also, this simplifies changes to update_converted_videos_from_GCS()
+        # to extract the presence of this low-size mp4 download URL.
         "filename": "%s.mp4-low/%s-low.mp4" % (youtube_id, youtube_id),
 
         "public": 1,
@@ -129,11 +130,11 @@ def output_mp4_low_ios(youtube_id, thumbnail_time, base_url):
     # Why is the filename format %s.mp4-low/%s-low.mp4 instead of a more
     # consistent %s-low.mp4/%s-low.mp4?
     #
-    # [webapp repo]/content/publish.py:update_converted_videos_from_S3()
+    # [webapp repo]/content/publish.py:update_converted_videos_from_GCS()
     # expects folders of the format YOUTUBE_ID.FORMAT -- it infers the
     # YOUTUBE_ID from the part before the dot. So if there is a YOUTUBE_ID
     # that ends in -low, there is the (low) possibility of collision here.
-    # Also, this simplifies changes to update_converted_videos_from_S3() to
+    # Also, this simplifies changes to update_converted_videos_from_GCS() to
     # extract the presence of this low-size mp4 download URL.
     destination_directory = "%s.mp4-low-ios" % youtube_id
     destination_filename = "%s-low-ios.mp4" % youtube_id
