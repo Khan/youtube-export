@@ -92,6 +92,11 @@ def output_mp4_low(youtube_id, thumbnail_time, base_url):
         "audio_bitrate": 4,
         "audio_sample_rate": 8000,
 
+        # set "no-cache" header in GCS
+        "headers": {
+            "Cache-Control": "no-cache"
+        },
+
         "watermarks": [
             {
                 "width": 128,
@@ -175,6 +180,11 @@ def output_mp4_low_ios(youtube_id, thumbnail_time, base_url):
         #     &prefix=lowpass_test_IYFkXWlgC_w.mp4-low-ios/
         "audio_lowpass": 5000,
 
+        # set "no-cache" header in GCS
+        "headers": {
+            "Cache-Control": "no-cache"
+        },
+
         "watermarks": [
             {
                 "width": 128,
@@ -208,6 +218,11 @@ def output_mp4(youtube_id, thumbnail_time, base_url):
         # Video encoding options
         "video_codec": "h264",
         "quality": 5,
+
+        # set "no-cache" header in GCS
+        "headers": {
+            "Cache-Control": "no-cache"
+        },
 
         "watermarks": [
             {
@@ -250,6 +265,12 @@ def output_m3u8_playlist(youtube_id, thumbnail_time, base_url):
                 "path": "%s-low.m3u8" % youtube_id
             },
         ],
+
+        # set "no-cache" header in GCS
+        "headers": {
+            "Cache-Control": "no-cache"
+        },
+
         "type": "playlist"
     }
 
@@ -273,6 +294,11 @@ def output_m3u8_low(youtube_id, thumbnail_time, base_url):
         "audio_channels": 1,
         "audio_normalize": True,
         "audio_lowpass": 6000,
+
+        # set "no-cache" header in GCS
+        "headers": {
+            "Cache-Control": "no-cache"
+        },
 
         "watermarks": [
             {
@@ -304,6 +330,11 @@ def output_m3u8_medium(youtube_id, thumbnail_time, base_url):
         "audio_quality": 3,
         "audio_normalize": True,
 
+        # set "no-cache" header in GCS
+        "headers": {
+            "Cache-Control": "no-cache"
+        },
+
         "watermarks": [
             {
                 "width": 128,
@@ -330,6 +361,11 @@ def output_m3u8_high(youtube_id, thumbnail_time, base_url):
         # Audio encoding options
         "audio_quality": 3,
         "audio_normalize": True,
+
+        # set "no-cache" header in GCS
+        "headers": {
+            "Cache-Control": "no-cache"
+        },
 
         "watermarks": [
             {
