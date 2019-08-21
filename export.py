@@ -83,10 +83,20 @@ class YouTubeExporter(object):
                     zencode.start_converting(youtube_id, gcs_source_url,
                                              formats_to_create)
                     videos_converted += 1
+                    logger.info(
+                        "Video conversion complete with youtube_id %s"
+                        % youtube_id
+                    )
                 except Exception, why:
                     logger.error('Skipping youtube_id "%s": %s'
                                  % (youtube_id, why))
                     error_ids.append(youtube_id)
+
+        backlog_len = len(formats_to_convert) - len(error_ids) \
+            - videos_converted
+        logger.info(
+            'Completed youtube-export with %d in the backlog' % backlog_len
+        )
 
         return (videos_converted, error_ids)
 
