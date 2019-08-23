@@ -60,6 +60,11 @@ class YouTubeExporter(object):
                 formats_to_create.remove("mp4")
 
             if len(formats_to_create) == 0:
+                logger.info(
+                    "Skipping video {} due to no formats to create.".format(
+                        youtube_id
+                    )
+                )
                 continue
 
             logger.info("Starting conversion of %s into formats %s" %
