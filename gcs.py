@@ -146,6 +146,7 @@ def list_missing_converted_formats():
     missing_converted_formats = {}
     converted_formats = list_converted_formats()
     for youtube_id in api.get_youtube_ids():
-        missing_converted_formats[youtube_id] = (
-            util.DOWNLOADABLE_FORMATS - converted_formats[youtube_id])
+        formats = util.DOWNLOADABLE_FORMATS - converted_formats[youtube_id]
+        if len(formats) > 0:
+            missing_converted_formats[youtube_id] = formats
     return missing_converted_formats
